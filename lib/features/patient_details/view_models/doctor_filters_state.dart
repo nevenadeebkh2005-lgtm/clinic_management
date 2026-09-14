@@ -3,8 +3,6 @@ import '../models/doctor_dummy_data.dart';
 
 enum AvailabilityFilter { none, today, tomorrow, thisWeek, custom }
 
-enum ConsultationTypeFilter { inPerson, online, both }
-
 enum FilterTimeSlot { morning, afternoon, evening }
 
 enum SortOption { bestMatch, priceLowToHigh, priceHighToLow, topRated, mostExperienced }
@@ -14,29 +12,25 @@ class DoctorFiltersState {
 
   final String searchQuery;
   final bool nearMeEnabled;
-  final String? selectedCity;
-  final String? mainSpecialty; // canonical (English) value, or null = any
-  final String? subSpecialty; // canonical (English) value, or null = any
+  final int? departmentId; // real Department.id from GET /departments, or null = any
+  final String? departmentName; // display name matching departmentId, used for local preview
   final RangeValues experienceRange;
   final RangeValues priceRange;
   final AvailabilityFilter availability;
   final Set<FilterTimeSlot> timeSlots;
-  final ConsultationTypeFilter consultationType;
-  final Set<String> genders; // UI-only: doctor records don't carry gender yet
+  final Set<String> genders; // 'male'/'female' values, matches DoctorListingModel.gender
   final SortOption sortBy;
 
   const DoctorFiltersState({
     required this.pool,
     this.searchQuery = '',
     this.nearMeEnabled = false,
-    this.selectedCity,
-    this.mainSpecialty,
-    this.subSpecialty,
+    this.departmentId,
+    this.departmentName,
     this.experienceRange = const RangeValues(0, 40),
     this.priceRange = const RangeValues(0, 500),
     this.availability = AvailabilityFilter.none,
     this.timeSlots = const {},
-    this.consultationType = ConsultationTypeFilter.both,
     this.genders = const {},
     this.sortBy = SortOption.bestMatch,
   });
@@ -46,20 +40,17 @@ class DoctorFiltersState {
 
   /// Doctors from [pool] that satisfy every filter currently set. Only
   /// matches against fields that actually exist on [DoctorListingModel] —
-  /// city/near-me/gender have no backing data yet, so they're intentionally
-  /// not applied here rather than faked.
+  /// near-me has no backing field to preview locally (it needs a live GPS
+  /// call), so it's intentionally not applied here rather than faked.
   List<DoctorListingModel> get matchingDoctors {
     return pool.where((doc) {
-      final matchesQuery = searchQuery.trim().isEmpty ||
-          doc.fullName.toLowerCase().contains(searchQuery.trim().toLowerCase()) ||
-          doc.subSpecialty.toLowerCase().contains(searchQuery.trim().toLowerCase()) ||
-          doc.mainSpecialty.toLowerCase().contains(searchQuery.trim().toLowerCase());
+      final query = searchQuery.trim().toLowerCase();
+      final matchesQuery = query.isEmpty ||
+          doc.fullName.toLowerCase().contains(query) ||
+          doc.departments.any((d) => d.toLowerCase().contains(query));
 
-      final matchesMain = mainSpecialty == null ||
-          doc.mainSpecialty.toLowerCase() == mainSpecialty!.toLowerCase();
-
-      final matchesSub = subSpecialty == null ||
-          doc.subSpecialty.toLowerCase() == subSpecialty!.toLowerCase();
+      final matchesDepartment = departmentName == null ||
+          doc.departments.any((d) => d.toLowerCase() == departmentName!.toLowerCase());
 
       final years = int.tryParse(doc.experienceYears ?? '');
       final matchesExperience = years == null ||
@@ -68,11 +59,10 @@ class DoctorFiltersState {
       final matchesPrice =
           doc.consultationFee >= priceRange.start && doc.consultationFee <= priceRange.end;
 
-      final matchesType = switch (consultationType) {
-        ConsultationTypeFilter.online => doc.offersOnlineConsultation,
-        ConsultationTypeFilter.inPerson => true,
-        ConsultationTypeFilter.both => true,
-      };
+      final matchesGender = genders.isEmpty ||
+          genders.length > 1 || // both selected = no restriction, same as sending no `gender` param
+          doc.gender == null ||
+          genders.contains(doc.gender);
 
       final matchesAvailability = switch (availability) {
         AvailabilityFilter.none => true,
@@ -85,11 +75,10 @@ class DoctorFiltersState {
       };
 
       return matchesQuery &&
-          matchesMain &&
-          matchesSub &&
+          matchesDepartment &&
           matchesExperience &&
           matchesPrice &&
-          matchesType &&
+          matchesGender &&
           matchesAvailability;
     }).toList();
   }
@@ -99,17 +88,13 @@ class DoctorFiltersState {
   DoctorFiltersState copyWith({
     String? searchQuery,
     bool? nearMeEnabled,
-    String? selectedCity,
-    bool clearCity = false,
-    String? mainSpecialty,
-    bool clearMainSpecialty = false,
-    String? subSpecialty,
-    bool clearSubSpecialty = false,
+    int? departmentId,
+    String? departmentName,
+    bool clearDepartment = false,
     RangeValues? experienceRange,
     RangeValues? priceRange,
     AvailabilityFilter? availability,
     Set<FilterTimeSlot>? timeSlots,
-    ConsultationTypeFilter? consultationType,
     Set<String>? genders,
     SortOption? sortBy,
   }) {
@@ -117,14 +102,12 @@ class DoctorFiltersState {
       pool: pool,
       searchQuery: searchQuery ?? this.searchQuery,
       nearMeEnabled: nearMeEnabled ?? this.nearMeEnabled,
-      selectedCity: clearCity ? null : (selectedCity ?? this.selectedCity),
-      mainSpecialty: clearMainSpecialty ? null : (mainSpecialty ?? this.mainSpecialty),
-      subSpecialty: clearSubSpecialty ? null : (subSpecialty ?? this.subSpecialty),
+      departmentId: clearDepartment ? null : (departmentId ?? this.departmentId),
+      departmentName: clearDepartment ? null : (departmentName ?? this.departmentName),
       experienceRange: experienceRange ?? this.experienceRange,
       priceRange: priceRange ?? this.priceRange,
       availability: availability ?? this.availability,
       timeSlots: timeSlots ?? this.timeSlots,
-      consultationType: consultationType ?? this.consultationType,
       genders: genders ?? this.genders,
       sortBy: sortBy ?? this.sortBy,
     );

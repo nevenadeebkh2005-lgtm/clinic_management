@@ -135,7 +135,7 @@ class _LoginCardWidgetsState extends State<LoginCardWidgets> {
                   if (state.activeTab == LoginTab.login) ...[
                     Text(
                       AppStrings.emailAddress(context),
-                      style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: theme.textTheme.bodyLarge?.color),
+                      style: TextStyle(fontSize: 19.sp, fontWeight: FontWeight.w500, color: theme.textTheme.bodyLarge?.color),
                     ),
                     SizedBox(height: 8.h),
                     TextFormField(
@@ -158,7 +158,7 @@ class _LoginCardWidgetsState extends State<LoginCardWidgets> {
                       children: [
                         Text(
                           AppStrings.password(context),
-                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: theme.textTheme.bodyLarge?.color),
+                          style: TextStyle(fontSize: 19.sp, fontWeight: FontWeight.w500, color: theme.textTheme.bodyLarge?.color),
                         ),
                         TextButton(
                           onPressed: () {

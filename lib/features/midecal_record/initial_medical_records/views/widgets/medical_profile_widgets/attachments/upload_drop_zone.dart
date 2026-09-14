@@ -62,7 +62,7 @@ class UploadDropZone extends StatelessWidget {
               AppStrings.tapToUpload(context),
               style: TextStyle(
                 color: theme.textTheme.bodyLarge?.color,
-                fontSize: 14 * scaleFactor,
+                fontSize: 25 * scaleFactor,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -144,7 +144,7 @@ class _Chip extends StatelessWidget {
         label,
         style: TextStyle(
           color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
-          fontSize: 12 * scaleFactor,
+          fontSize: 25 * scaleFactor,
           fontWeight: FontWeight.w400,
         ),
       ),

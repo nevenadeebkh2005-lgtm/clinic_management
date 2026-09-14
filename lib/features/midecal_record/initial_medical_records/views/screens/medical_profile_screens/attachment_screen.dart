@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 // --- Models ---
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/constants/setting.dart';
+import '../../../../../../core/cubits/medical_record_status_cubit.dart';
 
 // --- Widgets ---
 import '../../../view_models/attachment_cubit.dart';
@@ -68,10 +69,22 @@ class _AttachmentView extends StatelessWidget {
       appBar: _buildAppBar(context, theme),
       bottomNavigationBar: BottomActionButtons(
         onBack: () => Navigator.pop(context),
-        onNextStep: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ReviewSubmitScreen()),
-        ),
+        onNextStep: () {
+          // ⚠️ 19/8: تمرير MedicalRecordStatusCubit - نفس السبب المشروح
+          // بباقي خطوات المعالج (medical_overview_screen.dart وغيرها).
+          // هاي آخر قفزة بالسلسلة، وReviewSubmitScreen هي يلي فعلياً
+          // بتستخدم الكيوبت (زر Confirm & Submit)، فلازم توصلها سليمة.
+          final medicalRecordStatusCubit = context.read<MedicalRecordStatusCubit>();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BlocProvider.value(
+                value: medicalRecordStatusCubit,
+                child: const ReviewSubmitScreen(),
+              ),
+            ),
+          );
+        },
       ),
       body: BlocConsumer<AttachmentCubit, AttachmentState>(
         listener: (context, state) {
@@ -105,7 +118,7 @@ class _AttachmentView extends StatelessWidget {
         AppStrings.medicalProfileTitle(context),
         style: TextStyle(
           color: theme.textTheme.bodyLarge?.color,
-          fontSize: 17 * scaleFactor,
+          fontSize: 25 * scaleFactor,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -126,7 +139,7 @@ class _AttachmentView extends StatelessWidget {
             AppStrings.attachmentsSection(context),
             style: TextStyle(
               color: theme.textTheme.bodyLarge?.color,
-              fontSize: 15 * scaleFactor,
+              fontSize: 25 * scaleFactor,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -137,7 +150,7 @@ class _AttachmentView extends StatelessWidget {
             AppStrings.uploadFilesTitle(context),
             style: TextStyle(
               color: theme.textTheme.bodyLarge?.color,
-              fontSize: 24 * scaleFactor,
+              fontSize: 25 * scaleFactor,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -146,7 +159,7 @@ class _AttachmentView extends StatelessWidget {
             AppStrings.uploadFilesDesc(context),
             style: TextStyle(
               color: theme.textTheme.bodyMedium?.color,
-              fontSize: 13 * scaleFactor,
+              fontSize: 25 * scaleFactor,
               height: 1.5,
             ),
           ),
@@ -163,7 +176,7 @@ class _AttachmentView extends StatelessWidget {
               AppStrings.attachedFilesSection(context),
               style: TextStyle(
                 color: theme.textTheme.bodyLarge?.color,
-                fontSize: 16 * scaleFactor,
+                fontSize: 25 * scaleFactor,
                 fontWeight: FontWeight.w600,
               ),
             ),

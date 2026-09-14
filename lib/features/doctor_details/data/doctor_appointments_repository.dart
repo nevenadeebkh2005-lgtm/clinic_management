@@ -1,42 +1,89 @@
+import 'package:dio/dio.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_constants.dart';
+import '../../../core/network/api_exception.dart';
 import '../models/doctor_appointment_models.dart';
-import 'local_json_store.dart';
 
-/// ⚠️ لا يوجد endpoint حجوزات/مواعيد بالباك حالياً (ولا حتى من جهة
-/// المريض - شاشة "Bookings" عنده لسا Placeholder). لما يضيف الباك
-/// endpoints فعلية (GET /doctor/appointments، PATCH .../status..)، بدّل
-/// جسم الدوال هون بنداءات Dio حقيقية - الـ Cubit وواجهات العرض ما
-/// رح تحتاج أي تعديل لأنها بتتعامل مع [DoctorAppointment] فقط.
+/// ✅ 19/8: نداءات حقيقية بالكامل (Postman: Appointment/Doctor) - ما
+/// عاد تخزين محلي وهمي.
 class DoctorAppointmentsRepository {
-  String _key(int doctorId) => 'doctor_appointments_v1_$doctorId';
+  final Dio _dio = ApiClient.instance.dio;
 
-  Future<List<DoctorAppointment>> getAppointments(int doctorId) async {
-    final raw = await LocalJsonStore.instance.readJson(_key(doctorId));
-    if (raw is List) {
-      return raw
-          .whereType<Map<String, dynamic>>()
-          .map(DoctorAppointment.fromJson)
-          .toList()
-        ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+  Future<List<DoctorAppointment>> getAppointments() async {
+    try {
+      final response = await _dio.get(ApiConstants.doctorAppointments);
+      final data = response.data is Map ? response.data['data'] : null;
+      if (data is List) {
+        return data
+            .whereType<Map>()
+            .map((e) => DoctorAppointment.fromJson(Map<String, dynamic>.from(e)))
+            .toList()
+          ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
+      }
+      return const [];
+    } on DioException catch (e) {
+      throw _mapError(e);
     }
-    return const [];
   }
 
-  Future<void> _saveAll(int doctorId, List<DoctorAppointment> appointments) async {
-    await LocalJsonStore.instance.writeJson(
-      _key(doctorId),
-      appointments.map((a) => a.toJson()).toList(),
-    );
+  /// تسجيل دخول المريض للكشف - الموعد بيصير in_progress.
+  Future<void> start(int appointmentId) async {
+    try {
+      await _dio.post(ApiConstants.doctorAppointmentStart(appointmentId));
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
   }
 
-  Future<void> updateStatus({
-    required int doctorId,
-    required String appointmentId,
-    required DoctorAppointmentStatus status,
-  }) async {
-    final all = await getAppointments(doctorId);
-    final updated = all
-        .map((a) => a.id == appointmentId ? a.copyWith(status: status) : a)
-        .toList();
-    await _saveAll(doctorId, updated);
+  /// انتهاء الكشف فعلياً - المريض حضر - الموعد بيصير completed.
+  Future<void> complete(int appointmentId) async {
+    try {
+      await _dio.post(ApiConstants.doctorAppointmentComplete(appointmentId));
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  /// ⚠️ 19/8: نفس تصحيح جهة المريض - reason إلزامي هلق بالباك.
+  Future<void> cancel(int appointmentId, {required String reason}) async {
+    try {
+      await _dio.post(
+        ApiConstants.doctorAppointmentCancel(appointmentId),
+        data: FormData.fromMap({'reason': reason}),
+      );
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  /// المريض ما حضر أصلاً - الموعد بيصير no_show.
+  Future<void> markNoShow(int appointmentId) async {
+    try {
+      await _dio.post(ApiConstants.doctorAppointmentNoShow(appointmentId));
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  ApiException _mapError(DioException e) {
+    final response = e.response;
+    if (response == null) {
+      return ApiException('تعذّر الاتصال بالسيرفر، تأكد من الإنترنت وحاول مجدداً');
+    }
+    final data = response.data;
+    String message = 'حدث خطأ غير متوقع';
+    if (data is Map) {
+      message = data['message']?.toString() ?? message;
+      if (data['errors'] is Map) {
+        final errors = Map<String, dynamic>.from(data['errors']);
+        if (data['message'] == null && errors.isNotEmpty) {
+          final firstVal = errors.values.first;
+          if (firstVal is List && firstVal.isNotEmpty) {
+            message = firstVal.first.toString();
+          }
+        }
+      }
+    }
+    return ApiException(message, statusCode: response.statusCode);
   }
 }

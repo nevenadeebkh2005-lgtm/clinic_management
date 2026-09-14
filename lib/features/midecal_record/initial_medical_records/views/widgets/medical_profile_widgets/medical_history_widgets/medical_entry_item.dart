@@ -46,7 +46,7 @@ class MedicalEntryItem extends StatelessWidget {
                       style: TextStyle(
                         color: theme.textTheme.bodyLarge?.color,
                         fontSize:
-                            14 * scaleFactor, // تكبير ديناميكي ذكي للعنوان
+                            25 * scaleFactor, // تكبير ديناميكي ذكي للعنوان
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -56,7 +56,7 @@ class MedicalEntryItem extends StatelessWidget {
                       style: TextStyle(
                         color: theme.textTheme.bodyMedium?.color,
                         fontSize:
-                            12 * scaleFactor, // تكبير ديناميكي ذكي للتفاصيل
+                            25 * scaleFactor, // تكبير ديناميكي ذكي للتفاصيل
                         height: 1.4,
                       ),
                     ),

@@ -14,8 +14,11 @@ class DoctorListingModel {
   final String id;
   final String firstName;
   final String lastName;
-  final String mainSpecialty;
-  final String subSpecialty;
+  // ✅ توحيد mainSpecialty/subSpecialty السابقين بحقل واحد departments -
+  // القسم/الأقسام الحقيقية يلي الطبيب منتسب إلها فعلياً بالباك
+  // (doctor_departments pivot، راجع DoctorPublicResource::toArray)، بلا
+  // أي تمييز "رئيسي/فرعي" مصطنع كان مبني بس على ترتيب المصفوفة.
+  final List<String> departments;
   final String? profileImageUrl;
   final double rating;
   final int reviewCount;
@@ -29,13 +32,22 @@ class DoctorListingModel {
   final String? educationDegree;
   final String? experienceYears;
   final bool isFavourite;
+  // ✅ إضافة: النبذة عن الطبيب (biography) - موجودة فعلياً برد GET
+  // /doctors الحقيقي (راجع Postman) بس ما كانت موجودة إطلاقاً بهاد
+  // الموديل، فكانت شاشة بروفايل الطبيب عند المريض دايماً عم تعرض نص
+  // عام ثابت بدل النبذة الحقيقية يلي الطبيب كتبها بملفه.
+  final String? biography;
+  // ✅ إضافة: قيمة الجنس الخام من الباك ('male'/'female') - GET /doctors
+  // هلق بيرجعها (راجع DoctorPublicResource::toArray) بعد ما صار فلتر
+  // الجنس شغال فعلياً بالباك؛ تُستخدم هون بس للمعاينة المحلية
+  // (matchingDoctors) بحيث تطابق تماماً شو رح يرجع الباك فعلياً.
+  final String? gender;
 
   DoctorListingModel({
     required this.id,
     required this.firstName,
     required this.lastName,
-    required this.mainSpecialty,
-    required this.subSpecialty,
+    this.departments = const [],
     this.profileImageUrl,
     required this.rating,
     required this.reviewCount,
@@ -49,9 +61,15 @@ class DoctorListingModel {
     this.educationDegree,
     this.experienceYears,
     this.isFavourite = false,
+    this.biography,
+    this.gender,
   });
 
   String get fullName => 'Dr. $firstName $lastName';
+
+  /// اسم أول قسم منتسب له الطبيب، للعرض المختصر ببطاقات اللائحة (كان
+  /// قبل subSpecialty) - فاضي إذا الطبيب بلا أقسام مسجّلة.
+  String get department => departments.isNotEmpty ? departments.first : '';
 
   String get initials {
     final f = firstName.isNotEmpty ? firstName[0].toUpperCase() : '';
@@ -59,15 +77,14 @@ class DoctorListingModel {
     return '$f$l';
   }
 
-  DoctorListingModel copyWith({bool? isFavourite}) => DoctorListingModel(
+  DoctorListingModel copyWith({bool? isFavourite, double? rating, int? reviewCount}) => DoctorListingModel(
     id: id,
     firstName: firstName,
     lastName: lastName,
-    mainSpecialty: mainSpecialty,
-    subSpecialty: subSpecialty,
+    departments: departments,
     profileImageUrl: profileImageUrl,
-    rating: rating,
-    reviewCount: reviewCount,
+    rating: rating ?? this.rating,
+    reviewCount: reviewCount ?? this.reviewCount,
     workplaceNames: workplaceNames,
     clinicRefs: clinicRefs,
     primaryWorkplaceType: primaryWorkplaceType,
@@ -78,6 +95,8 @@ class DoctorListingModel {
     educationDegree: educationDegree,
     experienceYears: experienceYears,
     isFavourite: isFavourite ?? this.isFavourite,
+    biography: biography,
+    gender: gender,
   );
 
   factory DoctorListingModel.fromJson(Map<String, dynamic> json) =>
@@ -85,8 +104,9 @@ class DoctorListingModel {
         id: json['id'] as String,
         firstName: json['firstName'] as String,
         lastName: json['lastName'] as String,
-        mainSpecialty: json['mainSpecialty'] as String,
-        subSpecialty: json['subSpecialty'] as String,
+        departments: json['departments'] == null
+            ? const []
+            : List<String>.from(json['departments'] as List),
         profileImageUrl: json['profileImageUrl'] as String?,
         rating: (json['rating'] as num).toDouble(),
         reviewCount: json['reviewCount'] as int,
@@ -116,9 +136,13 @@ class DoctorListingModel {
     final firstName = spaceIndex == -1 ? fullName : fullName.substring(0, spaceIndex);
     final lastName = spaceIndex == -1 ? '' : fullName.substring(spaceIndex + 1);
 
-    final departments = json['departments'] as List? ?? const [];
+    final departmentsJson = json['departments'] as List? ?? const [];
     final clinics = json['clinics'] as List? ?? const [];
     final qualifications = json['qualifications'] as List? ?? const [];
+    // career قد ما يكون موجود إطلاقاً برد GET /doctors العام (شوهد فقط
+    // برد GET /doctor/profile الخاص) - منتعامل معه كاختياري بس نحاول
+    // نقرأه لو انضاف لاحقاً بالباك.
+    final career = json['career'] as Map<String, dynamic>?;
 
     // نفضّل رسم أول عيادة فعّالة (active) كسعر افتراضي للعرض، وإلا
     // نرجع لـ online_consultation_fee (رسم الاستشارة عن بعد العام).
@@ -135,8 +159,12 @@ class DoctorListingModel {
       id: json['id']?.toString() ?? '',
       firstName: firstName,
       lastName: lastName,
-      mainSpecialty: departments.isNotEmpty ? (departments.first['name']?.toString() ?? '') : '',
-      subSpecialty: departments.length > 1 ? (departments[1]['name']?.toString() ?? '') : '',
+      // كل الأقسام الحقيقية يلي الطبيب منتسب إلها (doctor_departments)،
+      // بلا أي تمييز "رئيسي/فرعي" - الترتيب متل ما رجعه الباك تماماً.
+      departments: departmentsJson
+          .map((d) => (d as Map)['name']?.toString() ?? '')
+          .where((s) => s.isNotEmpty)
+          .toList(),
       profileImageUrl: json['photo_url']?.toString(),
       rating: 0,
       reviewCount: 0,
@@ -150,14 +178,24 @@ class DoctorListingModel {
       consultationFee: fee,
       offersOnlineConsultation: json['online_consultation_fee'] != null,
       educationDegree: qualifications.isNotEmpty ? qualifications.first['degree']?.toString() : null,
+      // ✅ إضافة: biography موجودة على المستوى الأعلى مباشرة برد GET
+      // /doctors (راجع Postman). experience_years هلق مرجّعة مباشرة
+      // برد GET /doctors (راجع DoctorPublicResource::experience_years)
+      // فمنقراها من هونيك أولاً، وإلا نرجع لـ career لو موجودة (رد
+      // GET /doctor/profile الخاص).
+      biography: json['biography']?.toString(),
+      experienceYears: json['experience_years'] != null
+          ? '${json['experience_years']}'
+          : (career?['experience_years'] != null ? '${career!['experience_years']}' : null),
+      gender: json['gender']?.toString(),
     );
   }
 }
 
 
 final List<DoctorListingModel> dummyDoctors = [
-  DoctorListingModel(id:'1',firstName:'Sarah',lastName:'Jenkins',mainSpecialty:'Medicine',subSpecialty:'Cardiology',rating:4.9,reviewCount:128,workplaceNames:['City Heart Hospital'],primaryWorkplaceType:'hospital',availabilityStatus:'today',consultationFee:150,offersOnlineConsultation:true,experienceYears:'12',isFavourite:true),
-  DoctorListingModel(id:'2',firstName:'Marcus',lastName:'Chen',mainSpecialty:'Medicine',subSpecialty:'General Practice',rating:4.8,reviewCount:95,workplaceNames:['BlueCare Medical Center'],primaryWorkplaceType:'center',availabilityStatus:'tomorrow',consultationFee:90,offersOnlineConsultation:false,experienceYears:'8'),
-  DoctorListingModel(id:'3',firstName:'Emily',lastName:'Thorne',mainSpecialty:'Medicine',subSpecialty:'Dermatology',rating:4.9,reviewCount:210,workplaceNames:['Skin & Beauty Clinic'],primaryWorkplaceType:'clinic',availabilityStatus:'today',consultationFee:120,offersOnlineConsultation:true,experienceYears:'15'),
-  DoctorListingModel(id:'4',firstName:'Ali',lastName:'Khalid',mainSpecialty:'Dentistry',subSpecialty:'Orthodontics',rating:4.7,reviewCount:67,workplaceNames:['Smile Pro Dental Center'],primaryWorkplaceType:'center',availabilityStatus:'in_N_days',availableInDays:3,consultationFee:80,offersOnlineConsultation:false,experienceYears:'6'),
+  DoctorListingModel(id:'1',firstName:'Sarah',lastName:'Jenkins',departments:['Cardiology'],rating:4.9,reviewCount:128,workplaceNames:['City Heart Hospital'],primaryWorkplaceType:'hospital',availabilityStatus:'today',consultationFee:150,offersOnlineConsultation:true,experienceYears:'12',isFavourite:true),
+  DoctorListingModel(id:'2',firstName:'Marcus',lastName:'Chen',departments:['General Practice'],rating:4.8,reviewCount:95,workplaceNames:['BlueCare Medical Center'],primaryWorkplaceType:'center',availabilityStatus:'tomorrow',consultationFee:90,offersOnlineConsultation:false,experienceYears:'8'),
+  DoctorListingModel(id:'3',firstName:'Emily',lastName:'Thorne',departments:['Dermatology'],rating:4.9,reviewCount:210,workplaceNames:['Skin & Beauty Clinic'],primaryWorkplaceType:'clinic',availabilityStatus:'today',consultationFee:120,offersOnlineConsultation:true,experienceYears:'15'),
+  DoctorListingModel(id:'4',firstName:'Ali',lastName:'Khalid',departments:['Orthodontics'],rating:4.7,reviewCount:67,workplaceNames:['Smile Pro Dental Center'],primaryWorkplaceType:'center',availabilityStatus:'in_N_days',availableInDays:3,consultationFee:80,offersOnlineConsultation:false,experienceYears:'6'),
 ];

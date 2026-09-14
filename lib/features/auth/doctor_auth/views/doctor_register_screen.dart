@@ -81,7 +81,9 @@ class _DoctorRegisterMainScreenState extends State<DoctorRegisterMainScreen> {
           body: Column(
             children: [
               Expanded(
-                child: PageView(
+                child:
+
+                PageView(
                   controller: cubit.pageController,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
@@ -103,7 +105,8 @@ class _DoctorRegisterMainScreenState extends State<DoctorRegisterMainScreen> {
   }
 
   Widget _buildBottomNavigation(
-      BuildContext context, DoctorRegisterState state, DoctorRegisterCubit cubit, bool isSubmitting) {
+      BuildContext context, DoctorRegisterState state, DoctorRegisterCubit
+      cubit, bool isSubmitting) {
     final isLastStep = state.currentStep == cubit.totalSteps;
 
     return Container(

@@ -46,20 +46,16 @@ class DoctorHomeState {
     final now = DateTime.now();
     return upcomingAppointments
         .where((a) =>
-            a.status == DoctorAppointmentStatus.upcoming &&
             a.dateTime.year == now.year &&
             a.dateTime.month == now.month &&
             a.dateTime.day == now.day)
         .length;
   }
 
-  int get pendingAppointmentsCount =>
-      upcomingAppointments.where((a) => a.status == DoctorAppointmentStatus.upcoming).length;
+  int get pendingAppointmentsCount => upcomingAppointments.length;
 
   DoctorAppointment? get nextAppointment {
-    final upcoming = upcomingAppointments
-        .where((a) => a.status == DoctorAppointmentStatus.upcoming && a.dateTime.isAfter(DateTime.now()))
-        .toList()
+    final upcoming = upcomingAppointments.where((a) => a.dateTime.isAfter(DateTime.now())).toList()
       ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
     return upcoming.isEmpty ? null : upcoming.first;
   }

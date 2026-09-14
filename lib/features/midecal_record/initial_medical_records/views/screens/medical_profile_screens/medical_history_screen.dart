@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 // --- Models ---
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/constants/setting.dart';
+import '../../../../../../core/cubits/medical_record_status_cubit.dart';
 
 // --- Widgets ---
 import '../../../models/medical_history_models.dart';
@@ -45,15 +46,15 @@ class _MedicalHistoryView extends StatelessWidget {
   Widget _getSectionIcon(int index, ThemeData theme) {
     switch (index) {
       case 0:
-        return const Icon(Icons.monitor_heart_outlined, size: 20, color: Color(0xFFD32F2F));
+        return const Icon(Icons.monitor_heart_outlined, size: 25, color: Color(0xFFD32F2F));
       case 1:
-        return Icon(Icons.content_cut, size: 20, color: theme.textTheme.bodyMedium?.color);
+        return Icon(Icons.content_cut, size: 25, color: theme.textTheme.bodyMedium?.color);
       case 2:
-        return const Icon(Icons.coronavirus_outlined, size: 20, color: Color(0xFFD32F2F));
+        return const Icon(Icons.coronavirus_outlined, size: 25, color: Color(0xFFD32F2F));
       case 3:
-        return Icon(Icons.people_outline, size: 20, color: theme.textTheme.bodyMedium?.color);
+        return Icon(Icons.people_outline, size: 25, color: theme.textTheme.bodyMedium?.color);
       default:
-        return Icon(Icons.medical_services_outlined, size: 20, color: theme.primaryColor);
+        return Icon(Icons.medical_services_outlined, size: 25, color: theme.primaryColor);
     }
   }
 
@@ -80,10 +81,21 @@ class _MedicalHistoryView extends StatelessWidget {
       appBar: _buildAppBar(context, theme),
       bottomNavigationBar: BottomActionButtons(
         onBack: () => Navigator.pop(context),
-        onNextStep: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const MedicationsScreen()),
-        ),
+        onNextStep: () {
+          // ⚠️ 19/8: تمرير MedicalRecordStatusCubit لنفس السبب المشروح
+          // بـ medical_overview_screen.dart (كل قفزة Navigator.push جديدة
+          // بتحتاج تمريره من جديد).
+          final medicalRecordStatusCubit = context.read<MedicalRecordStatusCubit>();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BlocProvider.value(
+                value: medicalRecordStatusCubit,
+                child: const MedicationsScreen(),
+              ),
+            ),
+          );
+        },
       ),
       body: BlocConsumer<MedicalHistoryCubit, MedicalHistoryState>(
         listener: (context, state) {
@@ -117,7 +129,7 @@ class _MedicalHistoryView extends StatelessWidget {
         AppStrings.medicalProfileTitle(context),
         style: TextStyle(
           color: theme.textTheme.bodyLarge?.color,
-          fontSize: 17 * scaleFactor,
+          fontSize: 25 * scaleFactor,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -183,7 +195,7 @@ class _MedicalHistoryView extends StatelessWidget {
             AppStrings.medicalHistoryTitle(context),
             style: TextStyle(
               color: theme.textTheme.bodyLarge?.color,
-              fontSize: 24 * scaleFactor,
+              fontSize: 25 * scaleFactor,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -192,7 +204,7 @@ class _MedicalHistoryView extends StatelessWidget {
             AppStrings.medicalHistoryDesc(context),
             style: TextStyle(
               color: theme.textTheme.bodyMedium?.color,
-              fontSize: 13 * scaleFactor,
+              fontSize: 25 * scaleFactor,
               height: 1.5,
             ),
           ),

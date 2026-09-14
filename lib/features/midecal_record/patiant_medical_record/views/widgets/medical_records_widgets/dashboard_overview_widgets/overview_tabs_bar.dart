@@ -14,12 +14,17 @@ class OverviewTabsBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onTabSelected;
   final VoidCallback? onRefresh;
+  // ✅ إضافة: زر تعديل السجل الطبي - قبل هيك ما كان في أي مسار بالواجهة
+  // لتعديل سجل موجود أصلاً (بس تعبئة أول مرة كانت ممكنة). راجع
+  // medical_overview_screen.dart لتفاصيل الربط.
+  final VoidCallback? onEdit;
 
   const OverviewTabsBar({
     super.key,
     required this.selectedIndex,
     required this.onTabSelected,
     this.onRefresh,
+    this.onEdit,
   });
 
   @override
@@ -31,6 +36,7 @@ class OverviewTabsBar extends StatelessWidget {
       AppStrings.history(context),
       AppStrings.medications(context),
       AppStrings.attachments(context),
+      AppStrings.encounterTab(context),
     ];
 
     return Container(
@@ -80,6 +86,16 @@ class OverviewTabsBar extends StatelessWidget {
               ),
             ),
           ),
+          if (onEdit != null)
+            IconButton(
+              onPressed: onEdit,
+              tooltip: AppStrings.editMedicalRecord(context),
+              icon: Icon(
+                Icons.edit_outlined,
+                color: AppColors.textLightGrey,
+                size: 20.sp,
+              ),
+            ),
           if (onRefresh != null)
             IconButton(
               onPressed: onRefresh,

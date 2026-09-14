@@ -21,12 +21,7 @@ class StepThreeWidgets extends StatefulWidget {
 
 class _StepThreeWidgetsState extends State<StepThreeWidgets> {
   final ImagePicker _picker = ImagePicker();
-  // ⚠️ كانت هاي الخطوة (Professional Documents) لا تحتوي أي حقل لاختيار
-  // اختصاص الطبيب (department_ids) ولا تاريخ بدء الممارسة
-  // (practice_start_date)، رغم إنهم Required فعلياً بالباك عند
-  // /auth/complete-profile (راجع register_cubit.dart) - هيك كان أي
-  // طبيب يسجّل بيروح بدون اختصاص أبداً. أضفنا القسم هون بدل ما نفتح
-  // خطوة جديدة بالكامل (تفادياً لإعادة ترقيم كل الخطوات التالية).
+  //خطوة جديدة بالكامل (تفادياً لإعادة ترقيم كل الخطوات التالية).
   late final Future<List<DepartmentModel>> _departmentsFuture;
 
   @override
@@ -84,6 +79,21 @@ class _StepThreeWidgetsState extends State<StepThreeWidgets> {
       initialDate: initial,
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaleFactor: 1.0,
+          ),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: Theme.of(context).colorScheme.copyWith(
+                primary: AppColors.primaryGreen,
+              ),
+            ),
+            child: child!,
+          ),
+        );
+      },
     );
     if (picked != null) {
       final iso = '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';

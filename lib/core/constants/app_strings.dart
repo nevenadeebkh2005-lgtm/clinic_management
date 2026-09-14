@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:untitled3/core/constants/setting.dart';
+
 class AppStrings {
   static bool _isEn(BuildContext context) {
     return BlocProvider.of<SettingsCubit>(context).state.locale.languageCode ==
@@ -205,8 +206,8 @@ class AppStrings {
       _isEn(context) ? 'Identity Verification' : 'التحقق من الهوية';
   static String documentScannedSuccessfully(BuildContext context) =>
       _isEn(context)
-          ? 'Your document has been successfully scanned and verified.'
-          : 'تم مسح مستندك والتحقق منه بنجاح.';
+      ? 'Your document has been successfully scanned and verified.'
+      : 'تم مسح مستندك والتحقق منه بنجاح.';
 
   // --- Review Sections ---
   static String basicInfo(BuildContext context) =>
@@ -265,35 +266,35 @@ class AppStrings {
     if (main == 'Medicine' || main == 'الطب البشري') {
       return isEn
           ? [
-        'Cardiology',
-        'Dermatology',
-        'Neurology',
-        'Pediatrics',
-        'Surgery',
-        'Orthopedics',
-        'Ophthalmology',
-        'ENT',
-      ]
+              'Cardiology',
+              'Dermatology',
+              'Neurology',
+              'Pediatrics',
+              'Surgery',
+              'Orthopedics',
+              'Ophthalmology',
+              'ENT',
+            ]
           : [
-        'قلبية',
-        'جلدية',
-        'عصبية',
-        'أطفال',
-        'جراحة عامة',
-        'عظمية',
-        'عينية',
-        'أذن أنف حنجرة',
-      ];
+              'قلبية',
+              'جلدية',
+              'عصبية',
+              'أطفال',
+              'جراحة عامة',
+              'عظمية',
+              'عينية',
+              'أذن أنف حنجرة',
+            ];
     }
     if (main == 'Dentistry' || main == 'طب الأسنان') {
       return isEn
           ? [
-        'Orthodontics',
-        'Endodontics',
-        'Oral Surgery',
-        'Periodontics',
-        'Pedodontics',
-      ]
+              'Orthodontics',
+              'Endodontics',
+              'Oral Surgery',
+              'Periodontics',
+              'Pedodontics',
+            ]
           : ['تقويم', 'معالجة لبية', 'جراحة فم', 'لثة', 'أسنان أطفال'];
     }
     if (main == 'Pharmacy' || main == 'الصيدلة') {
@@ -315,14 +316,23 @@ class AppStrings {
   static List<String> subSpecialtiesCanonical(String main) {
     if (main == 'Medicine' || main == 'الطب البشري') {
       return const [
-        'Cardiology', 'Dermatology', 'Neurology', 'Pediatrics',
-        'Surgery', 'Orthopedics', 'Ophthalmology', 'ENT',
+        'Cardiology',
+        'Dermatology',
+        'Neurology',
+        'Pediatrics',
+        'Surgery',
+        'Orthopedics',
+        'Ophthalmology',
+        'ENT',
       ];
     }
     if (main == 'Dentistry' || main == 'طب الأسنان') {
       return const [
-        'Orthodontics', 'Endodontics', 'Oral Surgery',
-        'Periodontics', 'Pedodontics',
+        'Orthodontics',
+        'Endodontics',
+        'Oral Surgery',
+        'Periodontics',
+        'Pedodontics',
       ];
     }
     if (main == 'Pharmacy' || main == 'الصيدلة') {
@@ -412,6 +422,8 @@ class AppStrings {
       _isEn(context) ? 'Encounters History' : 'تواريخ المقابلات';
   static String comprehensiveHistory(BuildContext context) =>
       _isEn(context) ? 'Comprehensive History' : 'التاريخ المرضي الشامل';
+  static String endOfRecentHistory(BuildContext context) =>
+      _isEn(context) ? 'End of recent history' : 'نهاية السجل الأخير';
   static String otherConditions(BuildContext context) =>
       _isEn(context) ? 'Other Conditions' : 'حالات اخرى';
   static String familyHistory(BuildContext context) =>
@@ -424,8 +436,7 @@ class AppStrings {
       _isEn(context) ? 'Chronic Diseases' : 'الامراض المزمنة';
   static String viewAll(BuildContext context) =>
       _isEn(context) ? 'View All' : 'عرض الكل';
-  static String view(BuildContext context) =>
-      _isEn(context) ? 'view' : 'عرض';
+  static String view(BuildContext context) => _isEn(context) ? 'view' : 'عرض';
   static String download(BuildContext context) =>
       _isEn(context) ? 'download' : 'تحميل';
   static String prescriptions(BuildContext context) =>
@@ -451,7 +462,7 @@ class AppStrings {
   static String history(BuildContext context) =>
       _isEn(context) ? 'history' : 'التاريخ';
   static String overview(BuildContext context) =>
-      _isEn(context) ? 'Overview' :'معلومات عامة';
+      _isEn(context) ? 'Overview' : 'معلومات عامة';
   static String recentActivity(BuildContext context) =>
       _isEn(context) ? 'Recent Activity' : 'النشاطات الاخيرة';
   static String diagnosisSummary(BuildContext context) =>
@@ -482,8 +493,9 @@ class AppStrings {
       _isEn(context) ? 'Doctors' : 'الأطباء';
   static String chats(BuildContext context) =>
       _isEn(context) ? 'Chats' : 'المحادثات';
-  static String searchHint(BuildContext context) =>
-      _isEn(context) ? 'Search by name, specialty...' : 'ابحث باسم الطبيب، التخصص...';
+  static String searchHint(BuildContext context) => _isEn(context)
+      ? 'Search by name, specialty...'
+      : 'ابحث باسم الطبيب، التخصص...';
   static String about(BuildContext context) =>
       _isEn(context) ? 'About' : 'نبذة عن';
   static String availableSchedule(BuildContext context) =>
@@ -491,11 +503,24 @@ class AppStrings {
   static String morning(BuildContext context) =>
       _isEn(context) ? 'Morning' : 'الفترة الصباحية';
   static String afternoon(BuildContext context) =>
-      _isEn(context) ? 'Afternoon' : 'الفترة المسائية';
+      _isEn(context) ? 'Afternoon' : 'فترة بعد الظهر';
+  static String noSlotsForPeriod(BuildContext context) =>
+      _isEn(context) ? 'No slots available' : 'لا يوجد مواعيد متاحة';
   static String consultationFeeLabel(BuildContext context) =>
       _isEn(context) ? 'Consultation Fee' : 'قيمة الاستشارة';
   static String bookAppointment(BuildContext context) =>
       _isEn(context) ? 'Book appointment' : 'حجز موعد';
+  static String messageDoctor(BuildContext context) =>
+      _isEn(context) ? 'Message' : 'مراسلة';
+  static String messageDoctorRequiresAppointmentTitle(BuildContext context) =>
+      _isEn(context)
+      ? 'Book an appointment to chat'
+      : 'احجز موعداً حتى تتمكن من المراسلة';
+  static String messageDoctorRequiresAppointmentBody(BuildContext context) =>
+      _isEn(context)
+      ? 'You can message a doctor once you have an appointment with them.'
+      : 'يمكنك مراسلة الطبيب بعد حجز موعد معه.';
+  static String ok(BuildContext context) => _isEn(context) ? 'OK' : 'حسناً';
   static String reviews(BuildContext context) =>
       _isEn(context) ? 'reviews' : 'تقييم';
   static String settings(BuildContext context) =>
@@ -524,8 +549,9 @@ class AppStrings {
       _isEn(context) ? 'Medium' : 'متوسط';
   static String fontScaleLarge(BuildContext context) =>
       _isEn(context) ? 'Large' : 'كبير';
-  static String appVersionLabel(BuildContext context) =>
-      _isEn(context) ? 'Version 2.4.0 (Clinical Stable)' : 'الإصدار 2.4.0 (الإصدار السريري المستقر)';
+  static String appVersionLabel(BuildContext context) => _isEn(context)
+      ? 'Version 2.4.0 (Clinical Stable)'
+      : 'الإصدار 2.4.0 (الإصدار السريري المستقر)';
 
   // --- Search bar / Filters entry point ---
   static String searchDoctorHint(BuildContext context) =>
@@ -550,27 +576,40 @@ class AppStrings {
       _isEn(context) ? 'Specialty' : 'التخصص';
   static String experienceYears(BuildContext context) =>
       _isEn(context) ? 'Experience (Years)' : 'سنوات الخبرة';
-  static String min(BuildContext context) => _isEn(context) ? 'Min' : 'الحد الأدنى';
-  static String max(BuildContext context) => _isEn(context) ? 'Max' : 'الحد الأقصى';
+  static String min(BuildContext context) =>
+      _isEn(context) ? 'Min' : 'الحد الأدنى';
+  static String max(BuildContext context) =>
+      _isEn(context) ? 'Max' : 'الحد الأقصى';
   static String consultationPrice(BuildContext context) =>
       _isEn(context) ? 'Consultation Price' : 'سعر الاستشارة';
-  static String today(BuildContext context) => _isEn(context) ? 'Today' : 'اليوم';
-  static String tomorrow(BuildContext context) => _isEn(context) ? 'Tomorrow' : 'غداً';
-  static String thisWeek(BuildContext context) => _isEn(context) ? 'This week' : 'هذا الأسبوع';
-  static String custom(BuildContext context) => _isEn(context) ? 'Custom' : 'مخصص';
-  static String timeSlot(BuildContext context) => _isEn(context) ? 'Time Slot' : 'الفترة الزمنية';
-  static String evening(BuildContext context) => _isEn(context) ? 'Evening' : 'المساء';
+  static String today(BuildContext context) =>
+      _isEn(context) ? 'Today' : 'اليوم';
+  static String tomorrow(BuildContext context) =>
+      _isEn(context) ? 'Tomorrow' : 'غداً';
+  static String thisWeek(BuildContext context) =>
+      _isEn(context) ? 'This week' : 'هذا الأسبوع';
+  static String custom(BuildContext context) =>
+      _isEn(context) ? 'Custom' : 'مخصص';
+  static String timeSlot(BuildContext context) =>
+      _isEn(context) ? 'Time Slot' : 'الفترة الزمنية';
+  static String evening(BuildContext context) =>
+      _isEn(context) ? 'Evening' : 'المساء';
   static String consultationType(BuildContext context) =>
       _isEn(context) ? 'Consultation Type' : 'نوع الاستشارة';
-  static String inPerson(BuildContext context) => _isEn(context) ? 'In-person' : 'حضوري';
-  static String online(BuildContext context) => _isEn(context) ? 'Online' : 'عن بُعد';
-  static String both(BuildContext context) => _isEn(context) ? 'Both' : 'كلاهما';
-  static String sortBy(BuildContext context) => _isEn(context) ? 'Sort By' : 'الترتيب حسب';
-  static String bestMatch(BuildContext context) => _isEn(context) ? 'Best Match' : 'الأنسب';
-  static String clearAll(BuildContext context) => _isEn(context) ? 'Clear All' : 'مسح الكل';
-  static String applyFilters(BuildContext context, int count) => _isEn(context)
-      ? 'Apply Filters ($count)'
-      : 'تطبيق الفلاتر ($count)';
+  static String inPerson(BuildContext context) =>
+      _isEn(context) ? 'In-person' : 'حضوري';
+  static String online(BuildContext context) =>
+      _isEn(context) ? 'Online' : 'عن بُعد';
+  static String both(BuildContext context) =>
+      _isEn(context) ? 'Both' : 'كلاهما';
+  static String sortBy(BuildContext context) =>
+      _isEn(context) ? 'Sort By' : 'الترتيب حسب';
+  static String bestMatch(BuildContext context) =>
+      _isEn(context) ? 'Best Match' : 'الأنسب';
+  static String clearAll(BuildContext context) =>
+      _isEn(context) ? 'Clear All' : 'مسح الكل';
+  static String applyFilters(BuildContext context, int count) =>
+      _isEn(context) ? 'Apply Filters ($count)' : 'تطبيق الفلاتر ($count)';
 
   // --- Home Screen (Patient) ---
   static String goodMorning(BuildContext context) =>
@@ -585,7 +624,8 @@ class AppStrings {
       _isEn(context) ? 'Search now' : 'ابحث الآن';
   static String doctorSpecialties(BuildContext context) =>
       _isEn(context) ? 'Doctor Specialties' : 'تخصصات الأطباء';
-  static String seeAll(BuildContext context) => _isEn(context) ? 'See all' : 'عرض الكل';
+  static String seeAll(BuildContext context) =>
+      _isEn(context) ? 'See all' : 'عرض الكل';
   static String doctorsNearYou(BuildContext context) =>
       _isEn(context) ? 'Doctors Near You' : 'أطباء بالقرب منك';
   static String book(BuildContext context) => _isEn(context) ? 'Book' : 'حجز';
@@ -595,28 +635,35 @@ class AppStrings {
       _isEn(context) ? 'No saved doctors yet.' : 'لا يوجد أطباء محفوظون بعد.';
   static String favourites(BuildContext context) =>
       _isEn(context) ? 'Favourites' : 'المفضلة';
-  static String doctorsFoundCount(BuildContext context, int count) => _isEn(context)
-      ? '$count found'
-      : '$count نتيجة';
-  static String doctorsSavedCount(BuildContext context, int count) => _isEn(context)
-      ? '$count saved'
-      : '$count محفوظ';
+  static String doctorsFoundCount(BuildContext context, int count) =>
+      _isEn(context) ? '$count found' : '$count نتيجة';
+  static String doctorsSavedCount(BuildContext context, int count) =>
+      _isEn(context) ? '$count saved' : '$count محفوظ';
 
   // --- Patient Profile Screen ---
-  static String profile(BuildContext context) => _isEn(context) ? 'Profile' : 'الملف الشخصي';
+  static String profile(BuildContext context) =>
+      _isEn(context) ? 'Profile' : 'الملف الشخصي';
   static String editProfile(BuildContext context) =>
       _isEn(context) ? 'Edit Profile' : 'تعديل الملف الشخصي';
   static String personalInformation(BuildContext context) =>
       _isEn(context) ? 'Personal Information' : 'المعلومات الشخصية';
   static String contactDetails(BuildContext context) =>
       _isEn(context) ? 'Contact Details' : 'معلومات التواصل';
-  static String email(BuildContext context) => _isEn(context) ? 'Email' : 'البريد الإلكتروني';
-  static String address(BuildContext context) => _isEn(context) ? 'Address' : 'العنوان';
+  static String email(BuildContext context) =>
+      _isEn(context) ? 'Email' : 'البريد الإلكتروني';
+  static String address(BuildContext context) =>
+      _isEn(context) ? 'Address' : 'العنوان';
   static String appSettings(BuildContext context) =>
       _isEn(context) ? 'App Settings' : 'إعدادات التطبيق';
   static String changePassword(BuildContext context) =>
       _isEn(context) ? 'Change Password' : 'تغيير كلمة المرور';
-  static String logOut(BuildContext context) => _isEn(context) ? 'Log Out' : 'تسجيل الخروج';
+  // ✅ إضافة: "إعادة تعيين كلمة المرور" بنفس آلية "نسيت كلمة المرور"
+  // المستخدمة بشاشة تسجيل الدخول (بريد + كود تحقق + كلمة مرور جديدة)،
+  // بس متاحة من قائمة الإعدادات لمستخدم مسجّل دخوله فعلاً.
+  static String resetPassword(BuildContext context) =>
+      _isEn(context) ? 'Reset Password' : 'إعادة تعيين كلمة المرور';
+  static String logOut(BuildContext context) =>
+      _isEn(context) ? 'Log Out' : 'تسجيل الخروج';
   static String deleteAccount(BuildContext context) =>
       _isEn(context) ? 'Delete account' : 'حذف الحساب';
 
@@ -626,7 +673,8 @@ class AppStrings {
   static String deleteAccountDesc(BuildContext context) => _isEn(context)
       ? 'Are you sure you want to delete your account? This action is permanent and all your medical history and data will be lost.'
       : 'هل أنت متأكد أنك تريد حذف حسابك؟ هذا الإجراء نهائي وسيتم فقدان جميع بياناتك وتاريخك الطبي.';
-  static String delete(BuildContext context) => _isEn(context) ? 'Delete' : 'حذف';
+  static String delete(BuildContext context) =>
+      _isEn(context) ? 'Delete' : 'حذف';
   static String logOutConfirmTitle(BuildContext context) =>
       _isEn(context) ? 'Log Out?' : 'تسجيل الخروج؟';
   static String logOutConfirmDesc(BuildContext context) => _isEn(context)
@@ -636,15 +684,19 @@ class AppStrings {
   // --- Patient Medical Record (view) - shared across tabs ---
   static String refresh(BuildContext context) =>
       _isEn(context) ? 'Refresh' : 'تحديث';
+  // ✅ إضافة: كان ما في أي طريقة لتعديل السجل الطبي بعد أول تعبئة -
+  // زر يفتح نفس معالج الإدخال (History/Medications/Attachments) على
+  // البيانات الموجودة أصلاً حتى يقدر المريض يعدّلها.
+  static String editMedicalRecord(BuildContext context) =>
+      _isEn(context) ? 'Edit Medical Record' : 'تعديل السجل الطبي';
   static String retry(BuildContext context) =>
       _isEn(context) ? 'Retry' : 'إعادة المحاولة';
   static String somethingWentWrong(BuildContext context) =>
       _isEn(context) ? 'Something went wrong.' : 'حدث خطأ ما.';
   static String confirm(BuildContext context) =>
       _isEn(context) ? 'Confirm' : 'تأكيد';
-  static String noMedicalRecordYetTitle(BuildContext context) => _isEn(context)
-      ? 'No medical record yet'
-      : 'لا يوجد سجل طبي بعد';
+  static String noMedicalRecordYetTitle(BuildContext context) =>
+      _isEn(context) ? 'No medical record yet' : 'لا يوجد سجل طبي بعد';
   static String noMedicalRecordYetDesc(BuildContext context) => _isEn(context)
       ? 'Complete your medical record so we can tailor your care and keep everything in one place.'
       : 'أكمل سجلك الطبي حتى نقدر نخصص رعايتك ونجمع كل شي بمكان واحد.';
@@ -657,7 +709,8 @@ class AppStrings {
       : 'أكمل ملفك الشخصي ليظهر هنا.';
 
   // --- Medications tab ---
-  static String active(BuildContext context) => _isEn(context) ? 'Active' : 'نشط';
+  static String active(BuildContext context) =>
+      _isEn(context) ? 'Active' : 'نشط';
   static String past(BuildContext context) => _isEn(context) ? 'Past' : 'سابق';
   static String stopped(BuildContext context) =>
       _isEn(context) ? 'Stopped' : 'موقوف';
@@ -665,14 +718,14 @@ class AppStrings {
       _isEn(context) ? 'Stop Medication' : 'إيقاف الدواء';
   static String stopMedicationConfirmTitle(BuildContext context) =>
       _isEn(context) ? 'Stop this medication?' : 'إيقاف هذا الدواء؟';
-  static String stopMedicationConfirmDesc(BuildContext context) => _isEn(context)
+  static String stopMedicationConfirmDesc(BuildContext context) =>
+      _isEn(context)
       ? 'It will be marked as stopped and moved under Past.'
       : 'سيتم وضع علامة "موقوف" عليه ونقله إلى قسم السابقة.';
   static String stopReasonHint(BuildContext context) =>
       _isEn(context) ? 'Reason (optional)' : 'السبب (اختياري)';
-  static String noMedicationsYet(BuildContext context) => _isEn(context)
-      ? 'No medications added yet.'
-      : 'لا توجد أدوية مضافة بعد.';
+  static String noMedicationsYet(BuildContext context) =>
+      _isEn(context) ? 'No medications added yet.' : 'لا توجد أدوية مضافة بعد.';
   static String dosageLabel(BuildContext context) =>
       _isEn(context) ? 'Dosage' : 'الجرعة';
   static String frequencyLabel(BuildContext context) =>
@@ -712,7 +765,201 @@ class AppStrings {
       : 'لا يمكن التراجع عن هذا الإجراء.';
   static String deleteAttachmentConfirmTitle(BuildContext context) =>
       _isEn(context) ? 'Delete this file?' : 'حذف هذا الملف؟';
-  static String deleteAttachmentConfirmDesc(BuildContext context) => _isEn(context)
+  static String deleteAttachmentConfirmDesc(BuildContext context) =>
+      _isEn(context)
       ? 'This action cannot be undone.'
       : 'لا يمكن التراجع عن هذا الإجراء.';
+  // ✅ إضافة: تاب Encounter الجديد بصفحة السجل الطبي عند المريض
+  static String encounterTab(BuildContext context) =>
+      _isEn(context) ? 'Encounters' : 'الزيارات';
+  static String encounterDetails(BuildContext context) =>
+      _isEn(context) ? 'Encounter Details' : 'تفاصيل الزيارة';
+  static String clinicalNotes(BuildContext context) =>
+      _isEn(context) ? 'Clinical Notes' : 'الملاحظات السريرية';
+  static String diagnosis(BuildContext context) =>
+      _isEn(context) ? 'Diagnosis' : 'التشخيص';
+  static String noEncountersYet(BuildContext context) =>
+      _isEn(context) ? 'No encounters yet' : 'لا يوجد زيارات مسجّلة بعد';
+  static String noEncountersDesc(BuildContext context) => _isEn(context)
+      ? 'Completed visits with your doctor\'s diagnosis and notes will appear here.'
+      : 'الزيارات المكتملة مع تشخيص وملاحظات طبيبك رح تظهر هون.';
+  // --- Patient Appointments / Bookings (⚠️ 19/8: أضيفت مع ربط الحجز
+  // الحقيقي بـ POST /patient/appointments وGET/cancel/reschedule). ---
+  static String bookings(BuildContext context) =>
+      _isEn(context) ? 'Bookings' : 'الحجوزات';
+  static String upcomingAppointments(BuildContext context) =>
+      _isEn(context) ? 'Upcoming' : 'الحالية';
+  static String appointmentsHistory(BuildContext context) =>
+      _isEn(context) ? 'History' : 'السابقة';
+  static String cancelledAppointments(BuildContext context) =>
+      _isEn(context) ? 'Cancelled' : 'الملغاة';
+  static String confirmBookingTitle(BuildContext context) =>
+      _isEn(context) ? 'Confirm booking' : 'تأكيد الحجز';
+  static String confirmBookingDesc(BuildContext context) => _isEn(context)
+      ? 'Do you want to confirm this booking?'
+      : 'هل تريد تأكيد هذا الحجز؟';
+  static String confirmYes(BuildContext context) =>
+      _isEn(context) ? 'Yes, confirm' : 'نعم، تأكيد';
+  static String confirmNo(BuildContext context) =>
+      _isEn(context) ? 'Not now' : 'لا الآن';
+  static String bookingSuccessTitle(BuildContext context) =>
+      _isEn(context) ? 'Booking confirmed' : 'تم تأكيد الحجز';
+  static String bookingSuccessDesc(BuildContext context) => _isEn(context)
+      ? 'Your appointment has been booked and paid successfully.'
+      : 'تم حجز موعدك ودفعه بنجاح.';
+  static String slotNoLongerAvailable(BuildContext context) => _isEn(context)
+      ? 'This time slot is no longer available. Please pick another one.'
+      : 'هالموعد لم يعد متاحاً، اختر وقت تاني من فضلك.';
+  static String noAppointmentsHere(BuildContext context) =>
+      _isEn(context) ? 'No appointments here' : 'لا يوجد حجوزات هون';
+  static String cancelBookingTitle(BuildContext context) =>
+      _isEn(context) ? 'Cancel appointment?' : 'إلغاء الموعد؟';
+  static String cancelAppointmentAction(BuildContext context) =>
+      _isEn(context) ? 'Cancel appointment' : 'إلغاء الموعد';
+  static String cancelBookingDesc(BuildContext context) => _isEn(context)
+      ? 'Are you sure you want to cancel this appointment?'
+      : 'متأكد إنك بدك تلغي هالموعد؟';
+  static String keepBooking(BuildContext context) =>
+      _isEn(context) ? 'Keep it' : 'رجوع';
+  static String rescheduleAppointment(BuildContext context) =>
+      _isEn(context) ? 'Reschedule' : 'تعديل الموعد';
+  static String selectNewSlot(BuildContext context) =>
+      _isEn(context) ? 'Choose a new time' : 'اختر وقت جديد';
+  static String rescheduleSuccessTitle(BuildContext context) =>
+      _isEn(context) ? 'Appointment updated' : 'تم تعديل الموعد';
+
+  // --- Doctor Engagement: Favorites / Report / Review (DoctorEngagement module) ---
+  static String favoriteAdded(BuildContext context) =>
+      _isEn(context) ? 'Doctor added to favorites' : 'تمت إضافة الطبيب للمفضلة';
+  static String favoriteRemoved(BuildContext context) => _isEn(context)
+      ? 'Doctor removed from favorites'
+      : 'تمت إزالة الطبيب من المفضلة';
+
+  static String reportDoctorAction(BuildContext context) =>
+      _isEn(context) ? 'Report doctor' : 'الإبلاغ عن الطبيب';
+  static String reportDoctorTitle(BuildContext context) =>
+      _isEn(context) ? 'Report this doctor' : 'الإبلاغ عن هذا الطبيب';
+  static String reportCategoryLabel(BuildContext context) =>
+      _isEn(context) ? 'Reason' : 'سبب الإبلاغ';
+  static String reportDescriptionLabel(BuildContext context) =>
+      _isEn(context) ? 'Details' : 'تفاصيل';
+  static String reportDescriptionHint(BuildContext context) => _isEn(context)
+      ? 'Describe what happened...'
+      : 'اشرح اللي صار بالتفصيل...';
+  static String reportDescriptionRequired(BuildContext context) =>
+      _isEn(context)
+      ? 'Please describe what happened.'
+      : 'لازم تكتب تفاصيل البلاغ.';
+  static String reportSubmitAction(BuildContext context) =>
+      _isEn(context) ? 'Submit report' : 'إرسال البلاغ';
+  static String reportSubmittedSuccess(BuildContext context) => _isEn(context)
+      ? 'Your report has been submitted. Our team will review it.'
+      : 'تم إرسال بلاغك، فريقنا رح يراجعه قريباً.';
+  static String reportRequiresCompletedVisit(BuildContext context) => _isEn(context)
+      ? 'You can only report a doctor after a completed visit with them.'
+      : 'ما بتقدر تبلّغ عن طبيب إلا بعد ما يكون عندك موعد مكتمل معه.';
+
+  static String rateDoctorAction(BuildContext context) =>
+      _isEn(context) ? 'Rate doctor' : 'قيّم الطبيب';
+  static String rateDoctorTitle(BuildContext context) =>
+      _isEn(context) ? 'How was your visit?' : 'كيف كانت زيارتك؟';
+  static String ratingRequired(BuildContext context) => _isEn(context)
+      ? 'Please select a star rating.'
+      : 'لازم تختار عدد النجوم أولاً.';
+  static String reviewCommentHint(BuildContext context) =>
+      _isEn(context) ? 'Write a comment (optional)' : 'اكتب تعليقك (اختياري)';
+  static String reviewSubmittedSuccess(BuildContext context) => _isEn(context)
+      ? 'Thanks! Your rating has been submitted.'
+      : 'شكراً! تم إرسال تقييمك بنجاح.';
+  static String reviewsCountLabel(BuildContext context) =>
+      _isEn(context) ? 'reviews' : 'تقييم';
+
+  static String unexpectedError(BuildContext context) => _isEn(context)
+      ? 'Something went wrong. Please try again.'
+      : 'صار في خطأ غير متوقع، حاول مرة تانية.';
+
+  static String save(BuildContext context) =>
+      _isEn(context) ? 'Save' : 'حفظ';
+
+  // --- Wallet / Payments (Payments module - shared patient/doctor UI) ---
+  static String myWallet(BuildContext context) =>
+      _isEn(context) ? 'My Wallet' : 'محفظتي';
+  static String walletTitle(BuildContext context) =>
+      _isEn(context) ? 'Wallet' : 'المحفظة';
+  static String currentBalance(BuildContext context) =>
+      _isEn(context) ? 'Current balance' : 'الرصيد الحالي';
+  static String loadingWallet(BuildContext context) =>
+      _isEn(context) ? 'Loading wallet...' : 'جارِ تحميل المحفظة...';
+  static String transactionsLabel(BuildContext context) =>
+      _isEn(context) ? 'Transactions' : 'الحركات';
+  static String noTransactionsYet(BuildContext context) =>
+      _isEn(context) ? 'No transactions yet.' : 'لا يوجد أي حركات بعد.';
+  static String requestTopUp(BuildContext context) =>
+      _isEn(context) ? 'Request top-up' : 'طلب شحن رصيد';
+  static String requestWithdrawal(BuildContext context) =>
+      _isEn(context) ? 'Request withdrawal' : 'طلب سحب رصيد';
+  static String amountLabel(BuildContext context) =>
+      _isEn(context) ? 'Amount' : 'المبلغ';
+  static String enterValidAmount(BuildContext context) => _isEn(context)
+      ? 'Please enter a valid amount.'
+      : 'أدخل مبلغاً صحيحاً من فضلك.';
+  static String amountExceedsBalance(BuildContext context) => _isEn(context)
+      ? 'This amount exceeds your available balance.'
+      : 'هالمبلغ أكبر من رصيدك المتاح.';
+  static String submitRequest(BuildContext context) =>
+      _isEn(context) ? 'Submit request' : 'إرسال الطلب';
+  static String submittingRequest(BuildContext context) =>
+      _isEn(context) ? 'Submitting...' : 'جارِ الإرسال...';
+  static String topUpRequestSubmitted(BuildContext context) => _isEn(context)
+      ? 'Top-up request submitted. An administrator will review it shortly.'
+      : 'تم إرسال طلب الشحن. رح يراجعه الأدمن قريباً.';
+  static String withdrawalRequestSubmitted(BuildContext context) => _isEn(context)
+      ? 'Withdrawal request submitted. An administrator will review it shortly.'
+      : 'تم إرسال طلب السحب. رح يراجعه الأدمن قريباً.';
+  static String topUpHistory(BuildContext context) =>
+      _isEn(context) ? 'Top-up requests' : 'طلبات الشحن';
+  static String withdrawalHistory(BuildContext context) =>
+      _isEn(context) ? 'Withdrawal requests' : 'طلبات السحب';
+  static String noRequestsYet(BuildContext context) =>
+      _isEn(context) ? 'No requests yet.' : 'لا يوجد أي طلبات بعد.';
+  static String statusPending(BuildContext context) =>
+      _isEn(context) ? 'Pending' : 'قيد المراجعة';
+  static String statusApproved(BuildContext context) =>
+      _isEn(context) ? 'Approved' : 'تمت الموافقة';
+  static String statusRejected(BuildContext context) =>
+      _isEn(context) ? 'Rejected' : 'مرفوض';
+
+  // --- Booking payment step (choose payment method before confirming) ---
+  static String choosePaymentMethod(BuildContext context) => _isEn(context)
+      ? 'Choose how to pay'
+      : 'اختر طريقة الدفع';
+  static String loadingPaymentOptions(BuildContext context) => _isEn(context)
+      ? 'Loading payment options...'
+      : 'جارِ تحميل خيارات الدفع...';
+  static String payFullOnline(BuildContext context) =>
+      _isEn(context) ? 'Pay in full online' : 'دفع كامل أونلاين';
+  static String payFullOnlineDesc(BuildContext context) => _isEn(context)
+      ? 'The full consultation fee is paid now from your wallet.'
+      : 'يتم دفع كامل رسم الاستشارة الآن من محفظتك.';
+  static String payCashDeposit(BuildContext context) =>
+      _isEn(context) ? 'Cash at the clinic + online deposit' : 'كاش بالعيادة + عربون أونلاين';
+  static String payCashDepositDesc(BuildContext context, int depositPercent) => _isEn(context)
+      ? 'Pay a $depositPercent% deposit now, and the rest in cash at the clinic.'
+      : 'ادفع عربون $depositPercent% الآن، والباقي كاش بالعيادة.';
+  static String onlineOnlyNotice(BuildContext context) => _isEn(context)
+      ? 'Cash payment is unavailable on your account right now - only full online payment is offered.'
+      : 'الدفع كاش غير متاح على حسابك حالياً - متاح فقط الدفع الكامل أونلاين.';
+  static String totalPriceLabel(BuildContext context) =>
+      _isEn(context) ? 'Total price' : 'السعر الكامل';
+  static String amountDueNowLabel(BuildContext context) =>
+      _isEn(context) ? 'Due now' : 'المطلوب الآن';
+  static String walletBalanceLabel(BuildContext context) =>
+      _isEn(context) ? 'Wallet balance' : 'رصيد المحفظة';
+  static String confirmAndPay(BuildContext context) =>
+      _isEn(context) ? 'Confirm & pay' : 'تأكيد والدفع';
+  static String insufficientWalletBalance(BuildContext context) => _isEn(context)
+      ? 'Your wallet balance is not enough for this payment method.'
+      : 'رصيد محفظتك غير كافٍ لهذه الطريقة.';
+  static String topUpNow(BuildContext context) =>
+      _isEn(context) ? 'Top up wallet' : 'شحن المحفظة';
 }

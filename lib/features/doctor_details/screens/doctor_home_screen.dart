@@ -59,7 +59,21 @@ class DoctorHomeScreen extends StatelessWidget {
                 isDark: isDark,
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => DoctorProfileScreen(profile: state.profile)),
+                  MaterialPageRoute(
+                    // ✅ إصلاح: كان هون بيفتح DoctorProfileScreen مباشرة
+                    // بـ MaterialPageRoute عادي بدون تمرير DoctorHomeCubit
+                    // معه. الصفحات المفتوحة بـ Navigator.push بتصير أساساً
+                    // بفرع تاني من الشجرة (فوق الـ Overlay)، مو حرفياً
+                    // "جوا" MultiBlocProvider يلي بـ DoctorMainLayoutScreen
+                    // رغم إنها بصرياً فوقها - فأي context.read<DoctorHomeCubit>()
+                    // جوا DoctorProfileScreen (زي بعد حفظ التعديل أو
+                    // الانضمام لعيادة) كان يطيح بـ ProviderNotFoundException.
+                    // الحل: نمرر نفس الكيوبت الموجود صراحة عبر BlocProvider.value.
+                    builder: (_) => BlocProvider.value(
+                      value: context.read<DoctorHomeCubit>(),
+                      child: DoctorProfileScreen(profile: state.profile),
+                    ),
+                  ),
                 ),
               ),
               SizedBox(height: 16.h),

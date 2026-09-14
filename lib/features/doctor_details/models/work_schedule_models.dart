@@ -194,11 +194,21 @@ class AvailabilitySlot {
 
   bool get isAvailable => status == 'available';
 
+  /// ⚠️ 19/8: تصحيح جوهري (Timezone) - الباك ما عنده أي مفهوم توقيت
+  /// حقيقي: هو بس بيخزّن نفس الـ "HH:mm" يلي الطبيب كتبه بشاشة الجدول
+  /// (مثلاً "09:00") ويرجعه بنفس اللحظة لكن معلّم بـ "+00:00" (UTC) شكلياً
+  /// - يعني "09:00" يلي قصدها الطبيب بتوقيته المحلي هو نفسه، مو 09:00
+  /// UTC حقيقي. لما كنا نستخدم .toLocal()، كان دارت عم يزيح الوقت
+  /// بفارق توقيت الجهاز فعلياً (مثلاً +3) فتصير 09:00 تظهر 12:00 -
+  /// وهيك كل الجلسة الصباحية (يلي أوقاتها المبكرة) كانت عم "تنزاح"
+  /// لتطلع بقسم بعد الظهر (>=12)، بينما المسائية (متأخرة أصلاً) تضل
+  /// بحدود قسمها رغم الانزياح فما كانت تبين المشكلة فيها. الحل: منستخدم
+  /// نفس ساعة/دقيقة القيمة الخام متل ما إجت بدون أي تحويل توقيت.
   factory AvailabilitySlot.fromJson(Map<String, dynamic> json) => AvailabilitySlot(
         id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
         clinicId: json['clinic_id'] is int ? json['clinic_id'] as int : int.tryParse('${json['clinic_id']}') ?? 0,
-        startsAt: DateTime.tryParse(json['starts_at']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
-        endsAt: DateTime.tryParse(json['ends_at']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+        startsAt: DateTime.tryParse(json['starts_at']?.toString() ?? '') ?? DateTime.now(),
+        endsAt: DateTime.tryParse(json['ends_at']?.toString() ?? '') ?? DateTime.now(),
         status: json['status']?.toString() ?? 'available',
       );
 }

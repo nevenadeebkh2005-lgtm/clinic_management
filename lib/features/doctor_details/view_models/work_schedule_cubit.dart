@@ -20,29 +20,23 @@ class WorkScheduleCubit extends Cubit<WorkScheduleState> {
         _appointmentsRepository = appointmentsRepository ?? DoctorAppointmentsRepository(),
         super(WorkScheduleState.initialFor(registeredClinics));
 
-  // work_schedule_cubit.dart - التعديلات على دالة load
   Future<void> load() async {
     if (state.clinics.isEmpty) return;
     emit(state.copyWith(status: WorkScheduleStatus.loading, clearMessages: true));
     try {
       final clinic = state.selectedClinic!;
       final schedule = await _repository.getSchedule(clinic.id, clinicName: clinic.name);
-
-      // إضافة للدييباغ: التأكد من وصول المواعيد
-      final appointments = await _appointmentsRepository.getAppointments(doctorId);
-      print('DEBUG: Loaded ${appointments.length} appointments for doctor $doctorId');
-
+      final appointments = await _appointmentsRepository.getAppointments();
       final slots = await _fetchAvailabilityWindow(clinic.id);
-      print('DEBUG: Generated ${slots.length} slots for clinic ${clinic.id}');
-
+      final blockedTimes = await _repository.getBlockedTimes(clinic.id);
       emit(state.copyWith(
         status: WorkScheduleStatus.loaded,
         schedule: schedule,
         slots: slots,
         localAppointments: appointments,
+        blockedTimes: blockedTimes,
       ));
     } catch (e) {
-      print('DEBUG: Error loading schedule: $e');
       emit(state.copyWith(status: WorkScheduleStatus.failure, errorMessage: _readable(e, 'تعذّر تحميل جدول العمل')));
     }
   }
@@ -150,7 +144,11 @@ class WorkScheduleCubit extends Cubit<WorkScheduleState> {
         bufferEnabled: bufferEnabledOverride ?? schedule.bufferEnabled,
         days: updatedDays,
       );
-      await _repository.generateSlots(clinicId);
+      await _repository.generateSlots(
+        clinicId,
+        dateFrom: DateTime.now(),
+        dateTo: DateTime.now().add(const Duration(days: 90)),
+      );
       final slots = await _fetchAvailabilityWindow(clinicId);
       emit(state.copyWith(status: WorkScheduleStatus.loaded, schedule: saved, slots: slots, infoMessage: 'تم حفظ الجدول'));
     } catch (e) {
@@ -208,9 +206,79 @@ class WorkScheduleCubit extends Cubit<WorkScheduleState> {
         endTime: _fmtDateTime(slot.endsAt),
       );
       final slots = await _fetchAvailabilityWindow(clinic.id);
-      emit(state.copyWith(status: WorkScheduleStatus.loaded, slots: slots, infoMessage: 'تم حجب الوقت'));
+      final blockedTimes = await _repository.getBlockedTimes(clinic.id);
+      emit(state.copyWith(status: WorkScheduleStatus.loaded, slots: slots, blockedTimes: blockedTimes, infoMessage: 'تم حجب الوقت'));
     } catch (e) {
       emit(state.copyWith(status: WorkScheduleStatus.failure, errorMessage: _readable(e, 'تعذّر حجب هالوقت')));
+    }
+  }
+
+  /// ✅ إضافة: حجب مدى وقت بتاريخ محدد بشكل حر (بدون الحاجة لاختيار
+  /// Slot جاهز من القائمة المولّدة أصلاً - عكس blockSlot).
+  Future<void> blockDate({
+    required DateTime date,
+    required TimeOfDay start,
+    required TimeOfDay end,
+    String? reason,
+  }) async {
+    final clinic = state.selectedClinic;
+    if (clinic == null) return;
+    emit(state.copyWith(status: WorkScheduleStatus.saving, clearMessages: true));
+    try {
+      await _repository.blockTimeByDate(
+        clinic.id,
+        date: date,
+        startTime: _fmt(start),
+        endTime: _fmt(end),
+        reason: reason,
+      );
+      final blockedTimes = await _repository.getBlockedTimes(clinic.id);
+      final slots = await _fetchAvailabilityWindow(clinic.id);
+      emit(state.copyWith(status: WorkScheduleStatus.loaded, slots: slots, blockedTimes: blockedTimes, infoMessage: 'تم حجب الوقت'));
+    } catch (e) {
+      emit(state.copyWith(status: WorkScheduleStatus.failure, errorMessage: _readable(e, 'تعذّر حجب هالوقت')));
+    }
+  }
+
+  /// ✅ إضافة: حجب وقت متكرر بيوم أسبوعي محدد (مثلاً "كل خميس من
+  /// 2-4 عصراً") - عكس blockSlot يلي بيحجب Slot محدد بتاريخ وحيد بس.
+  Future<void> blockDayOfWeek({
+    required int dayOfWeek,
+    required TimeOfDay start,
+    required TimeOfDay end,
+    String? reason,
+  }) async {
+    final clinic = state.selectedClinic;
+    if (clinic == null) return;
+    emit(state.copyWith(status: WorkScheduleStatus.saving, clearMessages: true));
+    try {
+      await _repository.blockTimeByDayOfWeek(
+        clinic.id,
+        dayOfWeek: dayOfWeek,
+        startTime: _fmt(start),
+        endTime: _fmt(end),
+        reason: reason,
+      );
+      final blockedTimes = await _repository.getBlockedTimes(clinic.id);
+      final slots = await _fetchAvailabilityWindow(clinic.id);
+      emit(state.copyWith(status: WorkScheduleStatus.loaded, slots: slots, blockedTimes: blockedTimes, infoMessage: 'تم حجب الوقت'));
+    } catch (e) {
+      emit(state.copyWith(status: WorkScheduleStatus.failure, errorMessage: _readable(e, 'تعذّر حجب هالوقت')));
+    }
+  }
+
+  /// ✅ إضافة: إلغاء حجب وقت (سواء كان بتاريخ محدد أو متكرر أسبوعياً).
+  Future<void> unblockTime(int blockedTimeId) async {
+    final clinic = state.selectedClinic;
+    if (clinic == null) return;
+    emit(state.copyWith(status: WorkScheduleStatus.saving, clearMessages: true));
+    try {
+      await _repository.deleteBlockedTime(blockedTimeId);
+      final blockedTimes = await _repository.getBlockedTimes(clinic.id);
+      final slots = await _fetchAvailabilityWindow(clinic.id);
+      emit(state.copyWith(status: WorkScheduleStatus.loaded, slots: slots, blockedTimes: blockedTimes, infoMessage: 'تم إلغاء الحجب'));
+    } catch (e) {
+      emit(state.copyWith(status: WorkScheduleStatus.failure, errorMessage: _readable(e, 'تعذّر إلغاء الحجب')));
     }
   }
 

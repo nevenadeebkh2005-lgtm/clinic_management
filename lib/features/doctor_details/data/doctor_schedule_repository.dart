@@ -69,9 +69,22 @@ class DoctorScheduleRepository {
   /// بيولّد المواعيد الفعلية (Slots) القابلة للحجز اعتماداً على الجدول
   /// الأسبوعي المحفوظ - لازم يتنادى بعد أي حفظ لجدول جديد حتى تطلع
   /// الأوقات فعلياً بشاشة "الأوقات المتاحة" (availability).
-  Future<void> generateSlots(int clinicId) async {
+  /// ⚠️ 19/8: تصحيح جوهري - الباك بيطلب date_from/date_to إلزامياً
+  /// بجسم الـ request (حسب Postman: POST .../generate-slots بـ
+  /// form-data فيها date_from/date_to)، وكانت هون عم تنبعت فاضية
+  /// فبيرجع 422 "date_from/date_to field is required" - وبما إنه
+  /// التوليد كان عم يفشل بصمت (ما في try/catch حواليه بمكان
+  /// النداء)، ولا Slot كان عم يتولّد فعلياً بالباك، وهيك المريض ما
+  /// كان شايف أي أوقات متاحة إطلاقاً.
+  Future<void> generateSlots(int clinicId, {required DateTime dateFrom, required DateTime dateTo}) async {
     try {
-      await _dio.post(ApiConstants.doctorGenerateSlots(clinicId), data: FormData.fromMap({}));
+      await _dio.post(
+        ApiConstants.doctorGenerateSlots(clinicId),
+        data: FormData.fromMap({
+          'date_from': _formatDate(dateFrom),
+          'date_to': _formatDate(dateTo),
+        }),
+      );
     } on DioException catch (e) {
       throw _mapError(e);
     }

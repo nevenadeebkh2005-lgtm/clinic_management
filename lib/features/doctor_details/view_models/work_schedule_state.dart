@@ -1,3 +1,4 @@
+import '../../../core/constants/appointment_status.dart';
 import '../models/doctor_appointment_models.dart';
 import '../models/doctor_profile_models.dart';
 import '../models/work_schedule_models.dart';
@@ -30,6 +31,10 @@ class WorkScheduleState {
   final DateTime selectedDate;
   final List<AvailabilitySlot> slots;
   final List<DoctorAppointment> localAppointments;
+  // ✅ إضافة: لائحة الأوقات المحجوبة (block time) - كانت البيانات
+  // موجودة بالباك (getBlockedTimes) بس ما كانت محمّلة ولا معروضة
+  // بالحالة إطلاقاً.
+  final List<BlockedTime> blockedTimes;
   final String? errorMessage;
   final String? infoMessage;
 
@@ -41,6 +46,7 @@ class WorkScheduleState {
     required this.selectedDate,
     this.slots = const [],
     this.localAppointments = const [],
+    this.blockedTimes = const [],
     this.errorMessage,
     this.infoMessage,
   });
@@ -93,26 +99,15 @@ class WorkScheduleState {
 
   /// يلاقي حجز محلي (Local-only - راجع ملاحظة DoctorAppointmentsRepository)
   /// يتقاطع وقته مع الـ Slot، لعرضه بشكل "محجوز" بدل "متاح".
-  // work_schedule_state.dart - التعديلات على دالة المطابقة
   DoctorAppointment? appointmentOverlapping(AvailabilitySlot slot) {
     for (final a in localAppointments) {
-      // إذا كانت الحالة تمنع الظهور، يمكنك تفعيل هذا السطر لاحقاً
-      // if (a.status != DoctorAppointmentStatus.upcoming) continue;
-
+      if (a.tabGroup != AppointmentTabGroup.upcoming) continue;
       final sameDay = a.dateTime.year == slot.startsAt.year &&
           a.dateTime.month == slot.startsAt.month &&
           a.dateTime.day == slot.startsAt.day;
-
       if (!sameDay) continue;
-
-      // تعديل: مطابقة بالساعة والدقيقة لتجنب مشاكل الثواني والـ Duration
-      final matchesTime = (a.dateTime.hour == slot.startsAt.hour &&
-          a.dateTime.minute == slot.startsAt.minute);
-
-      // شرط المطابقة: إما مطابقة الساعة والدقيقة أو الوقوع ضمن المجال
-      if (matchesTime || (!a.dateTime.isBefore(slot.startsAt) && a.dateTime.isBefore(slot.endsAt))) {
-        return a;
-      }
+      final withinSlot = !a.dateTime.isBefore(slot.startsAt) && a.dateTime.isBefore(slot.endsAt);
+      if (withinSlot) return a;
     }
     return null;
   }
@@ -125,6 +120,7 @@ class WorkScheduleState {
     DateTime? selectedDate,
     List<AvailabilitySlot>? slots,
     List<DoctorAppointment>? localAppointments,
+    List<BlockedTime>? blockedTimes,
     String? errorMessage,
     String? infoMessage,
     bool clearMessages = false,
@@ -137,6 +133,7 @@ class WorkScheduleState {
       selectedDate: selectedDate ?? this.selectedDate,
       slots: slots ?? this.slots,
       localAppointments: localAppointments ?? this.localAppointments,
+      blockedTimes: blockedTimes ?? this.blockedTimes,
       errorMessage: clearMessages ? null : (errorMessage ?? this.errorMessage),
       infoMessage: clearMessages ? null : (infoMessage ?? this.infoMessage),
     );

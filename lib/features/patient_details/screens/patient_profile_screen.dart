@@ -1,24 +1,174 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:untitled3/core/constants/setting.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/network/api_exception.dart';
+import '../data/patient_profile_repository.dart';
 import '../models/patient_profile_dummy_data.dart';
 import '../../auth/Login.dart';
+import '../../auth/patient_auth/views/forget_password.dart';
 import '../views/widgets/settings_drawer_widget.dart';
 import 'widgets/confirm_action_dialog.dart';
+import '../../payments/screens/patient_wallet_screen.dart';
 
 /// Displays the signed-in patient's profile. Pass [profile] explicitly when
 /// wiring this up to a real data source — it defaults to the dummy record
 /// so the screen can be dropped in and pushed on its own.
-class PatientProfileScreen extends StatelessWidget {
+class PatientProfileScreen extends StatefulWidget {
   final PatientProfileModel profile;
 
   const PatientProfileScreen({super.key, this.profile = dummyPatientProfile});
 
   @override
+  State<PatientProfileScreen> createState() => _PatientProfileScreenState();
+}
+
+class _PatientProfileScreenState extends State<PatientProfileScreen> {
+  final PatientProfileRepository _repository = PatientProfileRepository();
+  final ImagePicker _picker = ImagePicker();
+  late PatientProfileModel _profile = widget.profile;
+  bool _isUploadingPhoto = false;
+
+  /// ✅ تعديل بيانات المريض الأساسية - PUT /patient/profile (راجع
+  /// ملاحظة الافتراض بـ api_constants.dart). بعد النجاح منحدّث
+  /// الحالة المحلية فوراً (الشاشة Stateful هلق) بدل ما تضل عارضة
+  /// القيم القديمة لحد ما يسكّر التطبيق ويرجع يفتحه.
+  Future<void> _showEditProfileSheet(BuildContext context) async {
+    final firstNameCtrl = TextEditingController(text: _profile.firstName);
+    final lastNameCtrl = TextEditingController(text: _profile.lastName);
+    final phoneCtrl = TextEditingController(text: _profile.phoneNumber);
+    final addressCtrl = TextEditingController(text: _profile.homeAddress);
+
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20.w,
+            right: 20.w,
+            top: 20.h,
+            bottom: 20.h + MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppStrings.editProfile(sheetContext), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                SizedBox(height: 14.h),
+                TextField(
+                  controller: firstNameCtrl,
+                  decoration: InputDecoration(labelText: AppStrings.firstName(sheetContext), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 10.h),
+                TextField(
+                  controller: lastNameCtrl,
+                  decoration: InputDecoration(labelText: AppStrings.lastName(sheetContext), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 10.h),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(labelText: AppStrings.phoneNumber(sheetContext), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 10.h),
+                TextField(
+                  controller: addressCtrl,
+                  decoration: InputDecoration(labelText: AppStrings.homeAddress(sheetContext), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 16.h),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46.h,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(sheetContext, true),
+                    child: Text(AppStrings.save(sheetContext)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (saved == true && mounted) {
+      try {
+        final updated = await _repository.updateProfile({
+          'first_name': firstNameCtrl.text.trim(),
+          'last_name': lastNameCtrl.text.trim(),
+          'phone': phoneCtrl.text.trim(),
+          'address': addressCtrl.text.trim(),
+        });
+        if (mounted) setState(() => _profile = updated);
+      } on ApiException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFC0392B)),
+          );
+        }
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.somethingWentWrong(context)), backgroundColor: const Color(0xFFC0392B)),
+          );
+        }
+      }
+    }
+  }
+
+  /// ✅ رفع/تغيير صورة البروفايل - POST /patient/profile/photo (نفس
+  /// نمط الطبيب: image_picker من المعرض ثم رفع كـ bytes، متوافقة مع
+  /// الويب كمان).
+  Future<void> _pickAndUploadPhoto() async {
+    if (_isUploadingPhoto) return;
+    final XFile? file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (file == null || !mounted) return;
+
+    setState(() => _isUploadingPhoto = true);
+    try {
+      final bytes = await file.readAsBytes();
+      final photoUrl = await _repository.updatePhoto(bytes, file.name);
+      if (!mounted) return;
+      setState(() {
+        _isUploadingPhoto = false;
+        if (photoUrl != null && photoUrl.isNotEmpty) {
+          _profile = PatientProfileModel(
+            id: _profile.id,
+            firstName: _profile.firstName,
+            lastName: _profile.lastName,
+            avatarUrl: photoUrl,
+            dateOfBirth: _profile.dateOfBirth,
+            gender: _profile.gender,
+            email: _profile.email,
+            isEmailVerified: _profile.isEmailVerified,
+            phoneNumber: _profile.phoneNumber,
+            homeAddress: _profile.homeAddress,
+          );
+        }
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploadingPhoto = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFC0392B)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isUploadingPhoto = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.somethingWentWrong(context)), backgroundColor: const Color(0xFFC0392B)),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final profile = _profile;
     final settingsState = context.watch<SettingsCubit>().state;
     final settingsCubit = context.read<SettingsCubit>();
     final isEn = settingsState.locale.languageCode == 'en';
@@ -87,15 +237,23 @@ class PatientProfileScreen extends StatelessWidget {
                     bottom: 0,
                     right: isEn ? 0 : null,
                     left: isEn ? null : 0,
-                    child: Container(
-                      width: 30.r,
-                      height: 30.r,
-                      decoration: BoxDecoration(
-                        color: primaryGreenColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: scaffoldBg, width: 2.w),
+                    child: GestureDetector(
+                      onTap: _pickAndUploadPhoto,
+                      child: Container(
+                        width: 30.r,
+                        height: 30.r,
+                        decoration: BoxDecoration(
+                          color: primaryGreenColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: scaffoldBg, width: 2.w),
+                        ),
+                        child: _isUploadingPhoto
+                            ? Padding(
+                                padding: EdgeInsets.all(6.r),
+                                child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : Icon(Icons.camera_alt_rounded, color: AppColors.white, size: 14.sp),
                       ),
-                      child: Icon(Icons.camera_alt_rounded, color: AppColors.white, size: 14.sp),
                     ),
                   ),
                 ],
@@ -110,7 +268,7 @@ class PatientProfileScreen extends StatelessWidget {
             SizedBox(height: 10.h),
             Center(
               child: OutlinedButton.icon(
-                onPressed: () {},
+                onPressed: () => _showEditProfileSheet(context),
                 icon: Icon(Icons.edit_outlined, size: 16.sp, color: primaryGreenColor),
                 label: Text(AppStrings.editProfile(context), style: TextStyle(color: primaryGreenColor, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
@@ -194,12 +352,28 @@ class PatientProfileScreen extends StatelessWidget {
             SizedBox(height: 10.h),
             _InfoCard(cardBg: cardBg, children: [
               _ActionRow(
+                icon: Icons.account_balance_wallet_outlined,
+                label: AppStrings.myWallet(context),
+                textColor: textColor,
+                labelSize: rowValueSize,
+                trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textLightGrey),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PatientWalletScreen()),
+                ),
+              ),
+              _rowDivider(),
+              _ActionRow(
                 icon: Icons.lock_outline_rounded,
                 label: AppStrings.changePassword(context),
                 textColor: textColor,
                 labelSize: rowValueSize,
                 trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textLightGrey),
-                onTap: () {},
+                // ✅ نفس تدفق "نسيت كلمة المرور" بالضبط (متل جهة الطبيب).
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                ),
               ),
               _rowDivider(),
               _ActionRow(

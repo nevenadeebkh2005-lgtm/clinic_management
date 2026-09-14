@@ -60,7 +60,7 @@ class AttachedFileItem extends StatelessWidget {
                   file.name,
                   style: TextStyle(
                     color: theme.textTheme.bodyLarge?.color,
-                    fontSize: 14 * scaleFactor,
+                    fontSize: 25 * scaleFactor,
                     fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -70,7 +70,7 @@ class AttachedFileItem extends StatelessWidget {
                   '${file.size} • ${file.status}',
                   style: TextStyle(
                     color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
-                    fontSize: 12 * scaleFactor,
+                    fontSize: 25 * scaleFactor,
                   ),
                 ),
               ],

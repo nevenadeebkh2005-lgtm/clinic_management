@@ -49,7 +49,7 @@ class StepProgressBar extends StatelessWidget {
                 color: theme.textTheme.bodyMedium?.color?.withOpacity(
                   0.6,
                 ), // توافق رمادي مع الـ Dark Mode
-                fontSize: 11 * scaleFactor,
+                fontSize: 25 * scaleFactor,
                 fontWeight: FontWeight.w600,
                 letterSpacing: isEn
                     ? 0.8
@@ -60,7 +60,7 @@ class StepProgressBar extends StatelessWidget {
               '$_percentage%',
               style: TextStyle(
                 color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
-                fontSize: 11 * scaleFactor,
+                fontSize: 25 * scaleFactor,
                 fontWeight: FontWeight.w600,
               ),
             ),

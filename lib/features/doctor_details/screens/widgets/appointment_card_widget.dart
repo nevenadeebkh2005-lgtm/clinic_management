@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_strings_doctor.dart';
+import '../../../../core/constants/appointment_status.dart';
 import '../../models/doctor_appointment_models.dart';
 
 class AppointmentCardWidget extends StatelessWidget {
@@ -23,17 +24,32 @@ class AppointmentCardWidget extends StatelessWidget {
     final primaryGreen = isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen;
 
     final (badgeBg, badgeText, badgeLabel) = switch (appointment.status) {
-      DoctorAppointmentStatus.upcoming => (
+      AppointmentApiStatus.scheduled => (
           primaryGreen.withOpacity(0.12),
           primaryGreen,
           DoctorStrings.upcoming(context),
         ),
-      DoctorAppointmentStatus.completed => (
+      AppointmentApiStatus.checkedIn => (
+          const Color(0xFF8E44AD).withOpacity(0.12),
+          const Color(0xFF8E44AD),
+          DoctorStrings.checkedIn(context),
+        ),
+      AppointmentApiStatus.inProgress => (
+          const Color(0xFF2980B9).withOpacity(0.12),
+          const Color(0xFF2980B9),
+          DoctorStrings.inProgress(context),
+        ),
+      AppointmentApiStatus.completed => (
           AppColors.textLightGrey.withOpacity(0.15),
           AppColors.textLightGrey,
           DoctorStrings.completed(context),
         ),
-      DoctorAppointmentStatus.cancelled => (
+      AppointmentApiStatus.noShow => (
+          const Color(0xFFE67E22).withOpacity(0.12),
+          const Color(0xFFE67E22),
+          DoctorStrings.noShow(context),
+        ),
+      AppointmentApiStatus.cancelled => (
           const Color(0xFFC0392B).withOpacity(0.12),
           const Color(0xFFC0392B),
           DoctorStrings.cancelled(context),

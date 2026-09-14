@@ -96,7 +96,7 @@ class _ReviewSubmitView extends StatelessWidget {
         AppStrings.medicalProfileTitle(context),
         style: TextStyle(
           color: theme.textTheme.bodyLarge?.color,
-          fontSize: 17 * scaleFactor,
+          fontSize: 25 * scaleFactor,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -142,7 +142,7 @@ class _ReviewSubmitView extends StatelessWidget {
                 AppStrings.reviewSubmitTitle(context),
                 style: TextStyle(
                   color: theme.textTheme.bodyLarge?.color,
-                  fontSize: 22 * scaleFactor,
+                  fontSize: 25 * scaleFactor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -150,7 +150,7 @@ class _ReviewSubmitView extends StatelessWidget {
                 '100%',
                 style: TextStyle(
                   color: theme.textTheme.bodyMedium?.color,
-                  fontSize: 13 * scaleFactor,
+                  fontSize: 25 * scaleFactor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -161,7 +161,7 @@ class _ReviewSubmitView extends StatelessWidget {
             AppStrings.reviewSubmitDesc(context),
             style: TextStyle(
               color: theme.textTheme.bodyMedium?.color,
-              fontSize: 13 * scaleFactor,
+              fontSize: 25 * scaleFactor,
               height: 1.5,
             ),
           ),
@@ -187,7 +187,7 @@ class _ReviewSubmitView extends StatelessWidget {
                 AppStrings.knownAllergiesLabel(context),
                 style: TextStyle(
                   color: theme.textTheme.bodyMedium?.color,
-                  fontSize: 12 * scaleFactor,
+                  fontSize: 25 * scaleFactor,
                 ),
               ),
               const SizedBox(height: 6),
@@ -259,7 +259,7 @@ class _ReviewSubmitView extends StatelessWidget {
                     AppStrings.confirmSubmitButton(context),
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 15 * scaleFactor,
+                      fontSize: 25 * scaleFactor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -290,7 +290,7 @@ class _ReviewSubmitView extends StatelessWidget {
               text: TextSpan(
                 style: TextStyle(
                   color: theme.textTheme.bodyMedium?.color,
-                  fontSize: 12 * scaleFactor,
+                  fontSize: 25 * scaleFactor,
                   height: 1.5,
                 ),
                 children: [

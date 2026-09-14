@@ -64,7 +64,7 @@ class MedicationCard extends StatelessWidget {
                           medication.name,
                           style: TextStyle(
                             color: theme.textTheme.bodyLarge?.color,
-                            fontSize: 16 * scaleFactor,
+                            fontSize: 25 * scaleFactor,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -172,7 +172,7 @@ class _StatusBadge extends StatelessWidget {
           color: isActive
               ? const Color(0xFF388E3C)
               : (isDark ? Colors.grey[400] : Colors.grey[600]),
-          fontSize: 11 * scaleFactor,
+          fontSize: 25 * scaleFactor,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -217,7 +217,7 @@ class _InfoRow extends StatelessWidget {
           '$label ',
           style: TextStyle(
             color: theme.textTheme.bodyMedium?.color?.withOpacity(0.55),
-            fontSize: 12 * scaleFactor,
+            fontSize: 25 * scaleFactor,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -226,7 +226,7 @@ class _InfoRow extends StatelessWidget {
             value,
             style: TextStyle(
               color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85),
-              fontSize: 12 * scaleFactor,
+              fontSize: 25 * scaleFactor,
             ),
           ),
         ),

@@ -7,18 +7,17 @@ import 'package:untitled3/core/constants/setting.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/app_strings_doctor.dart';
 import '../../../core/widgets/location_pick_field.dart';
-import '../data/clinics_repository.dart';
 import '../data/doctor_repository.dart';
-import '../models/clinic_model.dart';
 
 /// شاشة "إضافة عيادة" (طبيب مسجّل أصلاً وبدو ينضم أو ينشئ عيادة ثانية).
 ///
-/// ✅ تحديث 16/8 حسب الكولكشن الأخير: التخصص/القسم ما عاد له علاقة
-/// بالانضمام لعيادة (بينحدد مرة وحدة بالريجستر ومستقل عن أي عيادة) -
-/// فشلنا خانة اختيار القسم نهائياً من وضع "Join"، وصار المطلوب بس
-/// clinic_id + رسم الكشف (consultation_fee). وضع "Create Clinic" صار
-/// حقيقي 100% هلق (POST /doctor/profile/clinics/create) بعد ما كان
-/// معطّل بانتظار الباك.
+/// ✅ 20/8: وحّدنا الشكل بالكامل مع خطوة "Clinic Setup" بالريجستر
+/// (step_four_widget.dart) - نفس التسميات/الأيقونات/الـ upload box.
+/// كمان شلنا خطوة "البحث عن العيادة بالـ ID + تأكيد" القديمة: صار وضع
+/// Join حقل واحد "Clinic Code" + رسم الكشف وبس، بلا أي lookup مسبق،
+/// بالضبط متل الريجستر (الباك بياخد clinic_code مباشرة بدون حاجة
+/// للتحقق منها قبل الإرسال). وضع "Create Clinic" حقيقي 100% هلق
+/// (POST /doctor/profile/clinics/create).
 class JoinClinicScreen extends StatefulWidget {
   final List<int> alreadyJoinedClinicIds;
 
@@ -30,18 +29,14 @@ class JoinClinicScreen extends StatefulWidget {
 
 class _JoinClinicScreenState extends State<JoinClinicScreen> {
   final DoctorRepository _doctorRepository = DoctorRepository();
-  final ClinicsRepository _clinicsRepository = ClinicsRepository();
   final ImagePicker _picker = ImagePicker();
 
   String _mode = 'join_clinic';
   bool _isSubmitting = false;
 
   // --- Join mode ---
-  final TextEditingController _idController = TextEditingController();
+  final TextEditingController _clinicCodeController = TextEditingController();
   final TextEditingController _joinFeeController = TextEditingController();
-  bool _isSearching = false;
-  ClinicModel? _foundClinic;
-  String? _searchError;
 
   // --- Create mode ---
   final TextEditingController _nameController = TextEditingController();
@@ -55,7 +50,7 @@ class _JoinClinicScreenState extends State<JoinClinicScreen> {
 
   @override
   void dispose() {
-    _idController.dispose();
+    _clinicCodeController.dispose();
     _joinFeeController.dispose();
     _nameController.dispose();
     _addressController.dispose();
@@ -64,30 +59,16 @@ class _JoinClinicScreenState extends State<JoinClinicScreen> {
     super.dispose();
   }
 
-  Future<void> _lookup() async {
-    final id = int.tryParse(_idController.text.trim());
-    if (id == null) return;
-    setState(() {
-      _isSearching = true;
-      _foundClinic = null;
-      _searchError = null;
-    });
-    final clinic = await _clinicsRepository.getClinicById(id);
-    if (!mounted) return;
-    setState(() {
-      _isSearching = false;
-      _foundClinic = clinic;
-      if (clinic == null) _searchError = DoctorStrings.clinicNotFound(context);
-    });
-  }
-
   Future<void> _join() async {
-    final clinic = _foundClinic;
+    final code = _clinicCodeController.text.trim();
     final fee = double.tryParse(_joinFeeController.text.trim());
-    if (clinic == null || fee == null) return;
+    if (code.isEmpty || fee == null) {
+      _showMessage('عبّي كود العيادة ورسم الكشف');
+      return;
+    }
     setState(() => _isSubmitting = true);
     try {
-      await _doctorRepository.joinClinic(clinicId: clinic.id, consultationFee: fee);
+      await _doctorRepository.joinClinic(clinicCode: code, consultationFee: fee);
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
@@ -150,11 +131,7 @@ class _JoinClinicScreenState extends State<JoinClinicScreen> {
     final isEn = settingsState.locale.languageCode == 'en';
     final isDark = settingsState.themeMode == ThemeMode.dark;
     final scaffoldBg = isDark ? AppColors.darkBackground : AppColors.backgroundBeige;
-    final cardBg = isDark ? AppColors.darkCard : AppColors.white;
-    final textColor = isDark ? AppColors.darkText : AppColors.textDark;
-    final primaryGreen = isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen;
-
-    final alreadyJoined = _foundClinic != null && widget.alreadyJoinedClinicIds.contains(_foundClinic!.id);
+    final themeColor = isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen;
 
     return Directionality(
       textDirection: isEn ? TextDirection.ltr : TextDirection.rtl,
@@ -165,191 +142,141 @@ class _JoinClinicScreenState extends State<JoinClinicScreen> {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: Icon(isEn ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded, color: primaryGreen),
+            icon: Icon(isEn ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded, color: themeColor),
             onPressed: () => Navigator.maybePop(context),
           ),
           title: Text(DoctorStrings.joinClinic(context),
-              style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w800, color: primaryGreen)),
+              style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w800, color: themeColor)),
         ),
         body: Stack(
           children: [
-            ListView(
-              padding: EdgeInsets.all(16.w),
-              children: [
-                Container(
-                  decoration: BoxDecoration(color: AppColors.textLightGrey.withOpacity(0.10), borderRadius: BorderRadius.circular(8.r)),
-                  padding: EdgeInsets.all(4.w),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _ModeButton(
-                          label: DoctorStrings.joinExistingClinicMode(context),
-                          selected: _mode == 'join_clinic',
-                          isDark: isDark,
-                          onTap: () => setState(() => _mode = 'join_clinic'),
-                        ),
-                      ),
-                      Expanded(
-                        child: _ModeButton(
-                          label: DoctorStrings.createNewClinicMode(context),
-                          selected: _mode == 'create_clinic',
-                          isDark: isDark,
-                          onTap: () => setState(() => _mode = 'create_clinic'),
-                        ),
-                      ),
-                    ],
+            SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 15.h),
+
+                  // --- اختيار الوضع (نفس ستايل step_four_widget.dart) ---
+                  Container(
+                    decoration: BoxDecoration(color: Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(8.r)),
+                    padding: EdgeInsets.all(4.w),
+                    child: Row(
+                      children: [
+                        _buildModeButton(context, themeColor, value: 'join_clinic', label: DoctorStrings.joinExistingClinicMode(context)),
+                        _buildModeButton(context, themeColor, value: 'create_clinic', label: DoctorStrings.createNewClinicMode(context)),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(height: 20.h),
+                  SizedBox(height: 25.h),
 
-                if (_mode == 'join_clinic') ...[
-                  Text(DoctorStrings.clinicIdLabel(context), style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500, color: textColor)),
-                  SizedBox(height: 6.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _idController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            hintText: DoctorStrings.enterClinicIdHint(context),
-                            prefixIcon: const Icon(Icons.local_hospital_outlined),
-                            filled: true,
-                            fillColor: cardBg,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r), borderSide: BorderSide.none),
-                          ),
-                          onSubmitted: (_) => _lookup(),
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      SizedBox(
-                        height: 48.h,
-                        child: ElevatedButton(
-                          onPressed: _isSearching ? null : _lookup,
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryGreen, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r))),
-                          child: _isSearching
-                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : Text(DoctorStrings.lookUpClinic(context), style: const TextStyle(color: Colors.white)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(DoctorStrings.clinicIdTempNote(context), style: TextStyle(fontSize: 11.sp, color: AppColors.textLightGrey)),
-
-                  if (_searchError != null) ...[
-                    SizedBox(height: 14.h),
-                    Text(_searchError!, style: const TextStyle(color: Color(0xFFC0392B), fontSize: 12.5)),
-                  ],
-
-                  if (_foundClinic != null) ...[
-                    SizedBox(height: 18.h),
-                    Container(
-                      padding: EdgeInsets.all(14.w),
-                      decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(14.r)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.local_hospital_outlined, size: 18.sp, color: primaryGreen),
-                              SizedBox(width: 8.w),
-                              Expanded(
-                                child: Text(_foundClinic!.name,
-                                    style: TextStyle(fontSize: 14.5.sp, fontWeight: FontWeight.w700, color: textColor)),
-                              ),
-                            ],
-                          ),
-                          if (_foundClinic!.address != null) ...[
-                            SizedBox(height: 4.h),
-                            Text(_foundClinic!.address!, style: TextStyle(fontSize: 12.sp, color: AppColors.textLightGrey)),
-                          ],
-                          SizedBox(height: 14.h),
-                          if (alreadyJoined)
-                            Text(DoctorStrings.alreadyJoinedThisClinic(context),
-                                style: TextStyle(fontSize: 12.5.sp, color: primaryGreen, fontWeight: FontWeight.w600))
-                          else ...[
-                            Text(DoctorStrings.consultationFeeLabel(context),
-                                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: textColor)),
-                            SizedBox(height: 6.h),
-                            TextField(
-                              controller: _joinFeeController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              decoration: InputDecoration(
-                                hintText: '20',
-                                isDense: true,
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
-                              ),
-                            ),
-                            SizedBox(height: 14.h),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 46.h,
-                              child: ElevatedButton(
-                                onPressed: _isSubmitting ? null : _join,
-                                style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryGreen, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r))),
-                                child: Text(DoctorStrings.confirmJoin(context), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                              ),
-                            ),
-                          ],
-                        ],
+                  if (_mode == 'join_clinic') ...[
+                    Text('Clinic Code', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500)),
+                    SizedBox(height: 6.h),
+                    TextFormField(
+                      controller: _clinicCodeController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter the clinic code',
+                        prefixIcon: const Icon(Icons.local_hospital_outlined),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
                       ),
                     ),
-                  ],
-                ] else ...[
-                  // --- Create Clinic mode (حقيقية هلق) ---
-                  _LabeledField(label: 'اسم العيادة', controller: _nameController, textColor: textColor, cardBg: cardBg),
-                  SizedBox(height: 12.h),
-                  _LabeledField(label: 'عنوان العيادة', controller: _addressController, textColor: textColor, cardBg: cardBg),
-                  LocationPickField(
-                    latitude: _latitude,
-                    longitude: _longitude,
-                    label: 'تحديد موقع العيادة',
-                    onPicked: (lat, lng) => setState(() {
-                      _latitude = lat;
-                      _longitude = lng;
-                    }),
-                  ),
-                  SizedBox(height: 12.h),
-                  _LabeledField(label: 'رقم هاتف العيادة', controller: _phoneController, textColor: textColor, cardBg: cardBg, keyboardType: TextInputType.phone),
-                  SizedBox(height: 12.h),
-                  _LabeledField(label: DoctorStrings.consultationFeeLabel(context), controller: _createFeeController, textColor: textColor, cardBg: cardBg, keyboardType: const TextInputType.numberWithOptions(decimal: true)),
-                  SizedBox(height: 12.h),
-                  Text('ترخيص العيادة (اختياري)', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: textColor)),
-                  SizedBox(height: 6.h),
-                  InkWell(
-                    onTap: _pickLicense,
-                    child: Container(
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Temporary: ask your clinic admin for its code. This will be replaced with a search field once available.',
+                      style: TextStyle(fontSize: 11.sp, color: AppColors.textLightGrey),
+                    ),
+                    SizedBox(height: 15.h),
+                    Text('Your Consultation Fee at this Clinic', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500)),
+                    SizedBox(height: 6.h),
+                    TextFormField(
+                      controller: _joinFeeController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        hintText: '20',
+                        prefixIcon: const Icon(Icons.payments_outlined),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                      ),
+                    ),
+                    SizedBox(height: 25.h),
+                    SizedBox(
                       width: double.infinity,
-                      padding: EdgeInsets.symmetric(vertical: 16.h),
-                      decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(10.r), border: Border.all(color: AppColors.borderGrey)),
-                      alignment: Alignment.center,
-                      child: Text(
-                        _licenseFileName ?? 'اختر صورة ترخيص العيادة',
-                        style: TextStyle(fontSize: 12.5.sp, color: _licenseFileName != null ? primaryGreen : AppColors.textLightGrey),
+                      height: 48.h,
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _join,
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: themeColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r))),
+                        child: Text(DoctorStrings.confirmJoin(context), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                       ),
                     ),
-                  ),
-                  SizedBox(height: 20.h),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48.h,
-                    child: ElevatedButton(
-                      onPressed: _isSubmitting ? null : _createClinic,
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryGreen, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r))),
-                      child: Text('إنشاء العيادة', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  ] else ...[
+                    // --- create_clinic (نفس حقول step_four_widget.dart حرفياً) ---
+                    Text('Clinic Name', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500)),
+                    SizedBox(height: 6.h),
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(hintText: 'Clinic name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
                     ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'رح تنحفظ العيادة بحالة "قيد المراجعة" لحد ما يوافق عليها الأدمن.',
-                    style: TextStyle(fontSize: 11.sp, color: AppColors.textLightGrey),
-                  ),
+                    SizedBox(height: 15.h),
+                    Text('Clinic Address', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500)),
+                    SizedBox(height: 6.h),
+                    TextFormField(
+                      controller: _addressController,
+                      decoration: InputDecoration(hintText: 'Clinic address', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                    ),
+                    LocationPickField(
+                      latitude: _latitude,
+                      longitude: _longitude,
+                      label: 'تحديد موقع العيادة من الخريطة',
+                      onPicked: (lat, lng) => setState(() {
+                        _latitude = lat;
+                        _longitude = lng;
+                      }),
+                    ),
+                    SizedBox(height: 15.h),
+                    Text('Clinic Phone', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500)),
+                    SizedBox(height: 6.h),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(hintText: 'Clinic phone', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                    ),
+                    SizedBox(height: 15.h),
+                    Text('Consultation Fee at this Clinic', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500)),
+                    SizedBox(height: 6.h),
+                    TextFormField(
+                      controller: _createFeeController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        hintText: '20',
+                        prefixIcon: const Icon(Icons.payments_outlined),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    Text('Clinic License', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500)),
+                    SizedBox(height: 8.h),
+                    _buildUploadBox(context, themeColor, _licenseBytes, _pickLicense),
+                    SizedBox(height: 25.h),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48.h,
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _createClinic,
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: themeColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r))),
+                        child: const Text('Create Clinic', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'رح تنحفظ العيادة بحالة "قيد المراجعة" لحد ما يوافق عليها الأدمن.',
+                      style: TextStyle(fontSize: 11.sp, color: AppColors.textLightGrey),
+                    ),
+                  ],
+                  SizedBox(height: 20.h),
                 ],
-              ],
+              ),
             ),
             if (_isSubmitting)
               Container(color: Colors.black.withOpacity(0.15), child: const Center(child: CircularProgressIndicator())),
@@ -358,65 +285,64 @@ class _JoinClinicScreenState extends State<JoinClinicScreen> {
       ),
     );
   }
-}
 
-class _LabeledField extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-  final Color textColor;
-  final Color cardBg;
-  final TextInputType? keyboardType;
+  // --- نفس _buildModeButton بالضبط من step_four_widget.dart ---
+  Widget _buildModeButton(BuildContext context, Color themeColor, {required String value, required String label}) {
+    final isSelected = _mode == value;
 
-  const _LabeledField({required this.label, required this.controller, required this.textColor, required this.cardBg, this.keyboardType});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: textColor)),
-        SizedBox(height: 6.h),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: cardBg,
-            isDense: true,
-            contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r), borderSide: BorderSide.none),
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _mode = value),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 10.h),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(6.r),
+            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))] : [],
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? themeColor : AppColors.textLightGrey,
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
-}
 
-class _ModeButton extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _ModeButton({required this.label, required this.selected, required this.isDark, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final primaryGreen = isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen;
-    final textColor = isDark ? AppColors.darkText : AppColors.textDark;
-
+  // --- نفس _buildUploadBox بالضبط من step_four_widget.dart / step_three_widget.dart ---
+  Widget _buildUploadBox(BuildContext context, Color themeColor, Uint8List? bytes, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 10.h),
+        width: double.infinity,
+        height: 120.h,
         decoration: BoxDecoration(
-          color: selected ? primaryGreen : Colors.transparent,
-          borderRadius: BorderRadius.circular(6.r),
+          color: Colors.grey.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: Colors.grey.withOpacity(0.3)),
         ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(fontSize: 12.5.sp, fontWeight: FontWeight.w700, color: selected ? Colors.white : textColor),
+        child: bytes == null
+            ? Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cloud_upload_outlined, color: themeColor, size: 30.sp),
+            SizedBox(height: 8.h),
+            Text('Upload Image', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: themeColor)),
+          ],
+        )
+            : Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12.r),
+              child: Image.memory(bytes, width: double.infinity, height: 120.h, fit: BoxFit.cover),
+            ),
+            const Center(child: Icon(Icons.check_circle, color: Colors.green, size: 40)),
+          ],
         ),
       ),
     );

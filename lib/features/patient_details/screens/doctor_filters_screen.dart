@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:untitled3/core/constants/setting.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/doctor_auth/models/department_model.dart';
 import '../models/doctor_dummy_data.dart';
 import '../view_models/doctor_filters_cubit.dart';
 import '../view_models/doctor_filters_state.dart';
@@ -41,15 +43,23 @@ class _DoctorFiltersView extends StatelessWidget {
     double sectionSize = 15.sp;
     double bodySize = 13.sp;
     if (currentScale == FontScale.medium) {
-      titleSize = 23.sp; sectionSize = 17.sp; bodySize = 15.sp;
+      titleSize = 23.sp;
+      sectionSize = 17.sp;
+      bodySize = 15.sp;
     } else if (currentScale == FontScale.large) {
-      titleSize = 26.sp; sectionSize = 19.sp; bodySize = 17.sp;
+      titleSize = 26.sp;
+      sectionSize = 19.sp;
+      bodySize = 17.sp;
     }
 
-    final scaffoldBg = isDark ? AppColors.darkBackground : AppColors.backgroundBeige;
+    final scaffoldBg = isDark
+        ? AppColors.darkBackground
+        : AppColors.backgroundBeige;
     final cardBg = isDark ? AppColors.darkCard : AppColors.white;
     final textColor = isDark ? AppColors.darkText : AppColors.textDark;
-    final primaryGreen = isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen;
+    final primaryGreen = isDark
+        ? AppColors.darkPrimaryGreen
+        : AppColors.primaryGreen;
     final borderColor = isDark ? Colors.white10 : AppColors.borderGrey;
 
     return Directionality(
@@ -66,20 +76,32 @@ class _DoctorFiltersView extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: Icon(Icons.close_rounded, color: primaryGreen, size: 24.sp),
+                child: Icon(
+                  Icons.close_rounded,
+                  color: primaryGreen,
+                  size: 24.sp,
+                ),
               ),
               SizedBox(width: 12.w),
               Expanded(
                 child: Text(
                   AppStrings.filtersTitle(context),
-                  style: TextStyle(fontSize: titleSize, fontWeight: FontWeight.w700, color: primaryGreen),
+                  style: TextStyle(
+                    fontSize: titleSize,
+                    fontWeight: FontWeight.w700,
+                    color: primaryGreen,
+                  ),
                 ),
               ),
               GestureDetector(
                 onTap: cubit.reset,
                 child: Text(
                   AppStrings.reset(context),
-                  style: TextStyle(fontSize: bodySize, fontWeight: FontWeight.w600, color: primaryGreen),
+                  style: TextStyle(
+                    fontSize: bodySize,
+                    fontWeight: FontWeight.w600,
+                    color: primaryGreen,
+                  ),
                 ),
               ),
             ],
@@ -94,7 +116,11 @@ class _DoctorFiltersView extends StatelessWidget {
                   padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
                   physics: const BouncingScrollPhysics(),
                   children: [
-                    _SectionTitle(AppStrings.search(context), sectionSize, textColor),
+                    _SectionTitle(
+                      AppStrings.search(context),
+                      sectionSize,
+                      textColor,
+                    ),
                     SizedBox(height: 10.h),
                     _SearchField(
                       hint: AppStrings.searchDoctorHint(context),
@@ -108,20 +134,27 @@ class _DoctorFiltersView extends StatelessWidget {
                     Wrap(
                       spacing: 8.w,
                       runSpacing: 8.h,
-                      children: const ['Dr. Smith', 'Pediatrician', 'Mayo Clinic']
-                          .map((tag) => _QuickTagChip(
-                                label: tag,
-                                cardBg: cardBg,
-                                borderColor: borderColor,
-                                textColor: textColor,
-                                bodySize: bodySize,
-                                onTap: () => cubit.applyQuickTag(tag),
-                              ))
-                          .toList(),
+                      children:
+                          const ['Dr. Smith', 'Pediatrician', 'Mayo Clinic']
+                              .map(
+                                (tag) => _QuickTagChip(
+                                  label: tag,
+                                  cardBg: cardBg,
+                                  borderColor: borderColor,
+                                  textColor: textColor,
+                                  bodySize: bodySize,
+                                  onTap: () => cubit.applyQuickTag(tag),
+                                ),
+                              )
+                              .toList(),
                     ),
                     SizedBox(height: 24.h),
 
-                    _SectionTitle(AppStrings.location(context), sectionSize, textColor),
+                    _SectionTitle(
+                      AppStrings.location(context),
+                      sectionSize,
+                      textColor,
+                    ),
                     SizedBox(height: 10.h),
                     _NearMeButton(
                       label: AppStrings.nearMeGps(context),
@@ -132,54 +165,46 @@ class _DoctorFiltersView extends StatelessWidget {
                       bodySize: bodySize,
                       onTap: cubit.toggleNearMe,
                     ),
+                    // ⚠️ إزالة عمدية: كان في هون Dropdown لاختيار مدينة/منطقة، بس
+                    // العيادات بالباك ما عندها حقل city مهيكل (بس عنوان
+                    // نصي حر address) - فالفلتر كان يحدّث الحالة محلياً بس
+                    // وما كان يُرسل لأي endpoint فعلياً (لا يوجد query
+                    // param اسمه city بالباك أصلاً). بدل ما نخلي عنصر واجهة
+                    // "شغال" بالمظهر بس بلا أثر حقيقي، تمت إزالته وخلينا
+                    // Near Me (GPS) هو خيار الموقع الوحيد لحد ما تنضاف
+                    // بيانات مدينة مهيكلة بالباك.
+                    SizedBox(height: 24.h),
+
+                    _SectionTitle(
+                      AppStrings.specialty(context),
+                      sectionSize,
+                      textColor,
+                    ),
                     SizedBox(height: 10.h),
                     _DropdownRow(
-                      label: filters.selectedCity ?? AppStrings.selectCityArea(context),
+                      label:
+                          filters.departmentName ??
+                          AppStrings.selectSpecialty(context),
                       cardBg: cardBg,
                       borderColor: borderColor,
-                      textColor: filters.selectedCity == null ? AppColors.textLightGrey : textColor,
+                      textColor: filters.departmentName == null
+                          ? AppColors.textLightGrey
+                          : textColor,
                       bodySize: bodySize,
-                      onTap: () => _pickFromList(
+                      onTap: () => _pickDepartment(
                         context: context,
-                        title: AppStrings.selectCityArea(context),
-                        options: const ['Damascus', 'Aleppo', 'Homs', 'Latakia', 'Manchester'],
-                        onSelected: cubit.setCity,
+                        title: AppStrings.specialty(context),
+                        departments: cubit.departments,
+                        onSelected: cubit.setDepartment,
                       ),
                     ),
                     SizedBox(height: 24.h),
 
-                    _SectionTitle(AppStrings.specialty(context), sectionSize, textColor),
-                    SizedBox(height: 10.h),
-                    _DropdownRow(
-                      label: filters.mainSpecialty ?? AppStrings.mainSpecialty(context),
-                      cardBg: cardBg,
-                      borderColor: borderColor,
-                      textColor: filters.mainSpecialty == null ? AppColors.textLightGrey : textColor,
-                      bodySize: bodySize,
-                      onTap: () => _pickFromList(
-                        context: context,
-                        title: AppStrings.mainSpecialty(context),
-                        options: const ['Medicine', 'Dentistry', 'Pharmacy'],
-                        onSelected: cubit.setMainSpecialty,
-                      ),
+                    _SectionTitle(
+                      AppStrings.experienceYears(context),
+                      sectionSize,
+                      textColor,
                     ),
-                    SizedBox(height: 10.h),
-                    _DropdownRow(
-                      label: filters.subSpecialty ?? AppStrings.subSpecialty(context),
-                      cardBg: cardBg,
-                      borderColor: borderColor,
-                      textColor: filters.subSpecialty == null ? AppColors.textLightGrey : textColor,
-                      bodySize: bodySize,
-                      onTap: () => _pickFromList(
-                        context: context,
-                        title: AppStrings.subSpecialty(context),
-                        options: AppStrings.subSpecialtiesCanonical(filters.mainSpecialty ?? 'Medicine'),
-                        onSelected: cubit.setSubSpecialty,
-                      ),
-                    ),
-                    SizedBox(height: 24.h),
-
-                    _SectionTitle(AppStrings.experienceYears(context), sectionSize, textColor),
                     SizedBox(height: 10.h),
                     _RangeCard(
                       cardBg: cardBg,
@@ -196,7 +221,11 @@ class _DoctorFiltersView extends StatelessWidget {
                     ),
                     SizedBox(height: 24.h),
 
-                    _SectionTitle(AppStrings.consultationPrice(context), sectionSize, textColor),
+                    _SectionTitle(
+                      AppStrings.consultationPrice(context),
+                      sectionSize,
+                      textColor,
+                    ),
                     SizedBox(height: 10.h),
                     Container(
                       padding: EdgeInsets.all(14.r),
@@ -220,8 +249,20 @@ class _DoctorFiltersView extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('\$0', style: TextStyle(fontSize: bodySize, color: AppColors.textLightGrey)),
-                              Text('\$500+', style: TextStyle(fontSize: bodySize, color: AppColors.textLightGrey)),
+                              Text(
+                                '\$0',
+                                style: TextStyle(
+                                  fontSize: bodySize,
+                                  color: AppColors.textLightGrey,
+                                ),
+                              ),
+                              Text(
+                                '\$500+',
+                                style: TextStyle(
+                                  fontSize: bodySize,
+                                  color: AppColors.textLightGrey,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -229,33 +270,44 @@ class _DoctorFiltersView extends StatelessWidget {
                     ),
                     SizedBox(height: 24.h),
 
-                    _SectionTitle(AppStrings.availability(context), sectionSize, textColor),
+                    _SectionTitle(
+                      AppStrings.availability(context),
+                      sectionSize,
+                      textColor,
+                    ),
                     SizedBox(height: 10.h),
                     Row(
                       children: [
                         Expanded(
                           child: _ToggleChip(
                             label: AppStrings.today(context),
-                            selected: filters.availability == AvailabilityFilter.today,
+                            selected:
+                                filters.availability ==
+                                AvailabilityFilter.today,
                             primaryGreen: primaryGreen,
                             cardBg: cardBg,
                             borderColor: borderColor,
                             textColor: textColor,
                             bodySize: bodySize,
-                            onTap: () => cubit.setAvailability(AvailabilityFilter.today),
+                            onTap: () =>
+                                cubit.setAvailability(AvailabilityFilter.today),
                           ),
                         ),
                         SizedBox(width: 10.w),
                         Expanded(
                           child: _ToggleChip(
                             label: AppStrings.tomorrow(context),
-                            selected: filters.availability == AvailabilityFilter.tomorrow,
+                            selected:
+                                filters.availability ==
+                                AvailabilityFilter.tomorrow,
                             primaryGreen: primaryGreen,
                             cardBg: cardBg,
                             borderColor: borderColor,
                             textColor: textColor,
                             bodySize: bodySize,
-                            onTap: () => cubit.setAvailability(AvailabilityFilter.tomorrow),
+                            onTap: () => cubit.setAvailability(
+                              AvailabilityFilter.tomorrow,
+                            ),
                           ),
                         ),
                       ],
@@ -266,13 +318,17 @@ class _DoctorFiltersView extends StatelessWidget {
                         Expanded(
                           child: _ToggleChip(
                             label: AppStrings.thisWeek(context),
-                            selected: filters.availability == AvailabilityFilter.thisWeek,
+                            selected:
+                                filters.availability ==
+                                AvailabilityFilter.thisWeek,
                             primaryGreen: primaryGreen,
                             cardBg: cardBg,
                             borderColor: borderColor,
                             textColor: textColor,
                             bodySize: bodySize,
-                            onTap: () => cubit.setAvailability(AvailabilityFilter.thisWeek),
+                            onTap: () => cubit.setAvailability(
+                              AvailabilityFilter.thisWeek,
+                            ),
                           ),
                         ),
                         SizedBox(width: 10.w),
@@ -280,13 +336,17 @@ class _DoctorFiltersView extends StatelessWidget {
                           child: _ToggleChip(
                             label: AppStrings.custom(context),
                             icon: Icons.calendar_today_rounded,
-                            selected: filters.availability == AvailabilityFilter.custom,
+                            selected:
+                                filters.availability ==
+                                AvailabilityFilter.custom,
                             primaryGreen: primaryGreen,
                             cardBg: cardBg,
                             borderColor: borderColor,
                             textColor: textColor,
                             bodySize: bodySize,
-                            onTap: () => cubit.setAvailability(AvailabilityFilter.custom),
+                            onTap: () => cubit.setAvailability(
+                              AvailabilityFilter.custom,
+                            ),
                           ),
                         ),
                       ],
@@ -295,7 +355,11 @@ class _DoctorFiltersView extends StatelessWidget {
 
                     Text(
                       AppStrings.timeSlot(context),
-                      style: TextStyle(fontSize: bodySize, fontWeight: FontWeight.w600, color: AppColors.textLightGrey),
+                      style: TextStyle(
+                        fontSize: bodySize,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textLightGrey,
+                      ),
                     ),
                     SizedBox(height: 10.h),
                     Wrap(
@@ -304,55 +368,47 @@ class _DoctorFiltersView extends StatelessWidget {
                       children: [
                         _ToggleChip(
                           label: AppStrings.morning(context),
-                          selected: filters.timeSlots.contains(FilterTimeSlot.morning),
+                          selected: filters.timeSlots.contains(
+                            FilterTimeSlot.morning,
+                          ),
                           primaryGreen: primaryGreen,
                           cardBg: cardBg,
                           borderColor: borderColor,
                           textColor: textColor,
                           bodySize: bodySize,
                           compact: true,
-                          onTap: () => cubit.toggleTimeSlot(FilterTimeSlot.morning),
+                          onTap: () =>
+                              cubit.toggleTimeSlot(FilterTimeSlot.morning),
                         ),
                         _ToggleChip(
                           label: AppStrings.afternoon(context),
-                          selected: filters.timeSlots.contains(FilterTimeSlot.afternoon),
+                          selected: filters.timeSlots.contains(
+                            FilterTimeSlot.afternoon,
+                          ),
                           primaryGreen: primaryGreen,
                           cardBg: cardBg,
                           borderColor: borderColor,
                           textColor: textColor,
                           bodySize: bodySize,
                           compact: true,
-                          onTap: () => cubit.toggleTimeSlot(FilterTimeSlot.afternoon),
+                          onTap: () =>
+                              cubit.toggleTimeSlot(FilterTimeSlot.afternoon),
                         ),
                         _ToggleChip(
                           label: AppStrings.evening(context),
-                          selected: filters.timeSlots.contains(FilterTimeSlot.evening),
+                          selected: filters.timeSlots.contains(
+                            FilterTimeSlot.evening,
+                          ),
                           primaryGreen: primaryGreen,
                           cardBg: cardBg,
                           borderColor: borderColor,
                           textColor: textColor,
                           bodySize: bodySize,
                           compact: true,
-                          onTap: () => cubit.toggleTimeSlot(FilterTimeSlot.evening),
+                          onTap: () =>
+                              cubit.toggleTimeSlot(FilterTimeSlot.evening),
                         ),
                       ],
-                    ),
-                    SizedBox(height: 24.h),
-
-                    _SectionTitle(AppStrings.consultationType(context), sectionSize, textColor),
-                    SizedBox(height: 10.h),
-                    _SegmentedRow(
-                      cardBg: cardBg,
-                      primaryGreen: primaryGreen,
-                      textColor: textColor,
-                      bodySize: bodySize,
-                      options: [
-                        (AppStrings.inPerson(context), ConsultationTypeFilter.inPerson),
-                        (AppStrings.online(context), ConsultationTypeFilter.online),
-                        (AppStrings.both(context), ConsultationTypeFilter.both),
-                      ],
-                      selected: filters.consultationType,
-                      onSelected: cubit.setConsultationType,
                     ),
                     SizedBox(height: 24.h),
 
@@ -363,7 +419,11 @@ class _DoctorFiltersView extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _SectionTitle(AppStrings.gender(context), sectionSize, textColor),
+                              _SectionTitle(
+                                AppStrings.gender(context),
+                                sectionSize,
+                                textColor,
+                              ),
                               SizedBox(height: 10.h),
                               Row(
                                 children: [
@@ -381,7 +441,9 @@ class _DoctorFiltersView extends StatelessWidget {
                                   SizedBox(width: 8.w),
                                   _ToggleChip(
                                     label: AppStrings.female(context),
-                                    selected: filters.genders.contains('female'),
+                                    selected: filters.genders.contains(
+                                      'female',
+                                    ),
                                     primaryGreen: primaryGreen,
                                     cardBg: cardBg,
                                     borderColor: borderColor,
@@ -400,7 +462,11 @@ class _DoctorFiltersView extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _SectionTitle(AppStrings.sortBy(context), sectionSize, textColor),
+                              _SectionTitle(
+                                AppStrings.sortBy(context),
+                                sectionSize,
+                                textColor,
+                              ),
                               SizedBox(height: 10.h),
                               _DropdownRow(
                                 label: _sortLabel(context, filters.sortBy),
@@ -425,22 +491,34 @@ class _DoctorFiltersView extends StatelessWidget {
                 padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
                 decoration: BoxDecoration(
                   color: scaffoldBg,
-                  border: Border(top: BorderSide(color: borderColor, width: 1.w)),
+                  border: Border(
+                    top: BorderSide(color: borderColor, width: 1.w),
+                  ),
                 ),
                 child: Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: cubit.reset,
-                        icon: Icon(Icons.filter_alt_off_rounded, color: primaryGreen, size: 18.sp),
+                        icon: Icon(
+                          Icons.filter_alt_off_rounded,
+                          color: primaryGreen,
+                          size: 18.sp,
+                        ),
                         label: Text(
                           AppStrings.clearAll(context),
-                          style: TextStyle(color: primaryGreen, fontWeight: FontWeight.w700, fontSize: bodySize),
+                          style: TextStyle(
+                            color: primaryGreen,
+                            fontWeight: FontWeight.w700,
+                            fontSize: bodySize,
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           padding: EdgeInsets.symmetric(vertical: 14.h),
                           side: BorderSide(color: primaryGreen, width: 1.w),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                          ),
                         ),
                       ),
                     ),
@@ -448,19 +526,23 @@ class _DoctorFiltersView extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          context.read<DoctorListingCubit>().applyExternalFilters(
-                                subSpecialty: filters.subSpecialty,
-                                searchQuery: filters.searchQuery,
-                              );
-                          Navigator.pop(context);
-                        },
-                        icon: Icon(Icons.check_circle_rounded,
-                            color: isDark ? AppColors.darkBackground : AppColors.white, size: 18.sp),
+                        onPressed: () => _applyFilters(context, isEn),
+                        icon: Icon(
+                          Icons.check_circle_rounded,
+                          color: isDark
+                              ? AppColors.darkBackground
+                              : AppColors.white,
+                          size: 18.sp,
+                        ),
                         label: Text(
-                          AppStrings.applyFilters(context, filters.matchingCount),
+                          AppStrings.applyFilters(
+                            context,
+                            filters.matchingCount,
+                          ),
                           style: TextStyle(
-                            color: isDark ? AppColors.darkBackground : AppColors.white,
+                            color: isDark
+                                ? AppColors.darkBackground
+                                : AppColors.white,
                             fontWeight: FontWeight.w700,
                             fontSize: bodySize,
                           ),
@@ -469,7 +551,9 @@ class _DoctorFiltersView extends StatelessWidget {
                           backgroundColor: primaryGreen,
                           elevation: 0,
                           padding: EdgeInsets.symmetric(vertical: 14.h),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                          ),
                         ),
                       ),
                     ),
@@ -481,6 +565,43 @@ class _DoctorFiltersView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// بتطلب من الباك الأطباء المطابقين للفلاتر المختارة (GET /doctors مع
+  /// الفلاتر) وبتستبدل فيهم لائحة الأطباء بشاشة اللستنغ - أي طبيب ما
+  /// طابق عالباك بيختفي فعلياً، مو بس محجوب محلياً. بتعرض مؤشر تحميل
+  /// أثناء الطلب، وبترجع رسالة خطأ وتضل فاتحة الشاشة (بدون إغلاق) لو
+  /// الطلب فشل حتى يقدر المستخدم يعدّل ويعيد المحاولة.
+  Future<void> _applyFilters(BuildContext context, bool isEn) async {
+    final filtersCubit = context.read<DoctorFiltersCubit>();
+    final listingCubit = context.read<DoctorListingCubit>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final results = await filtersCubit.applyFilters();
+      listingCubit.applyBackendFilters(results);
+      if (!context.mounted) return;
+      Navigator.pop(context); // يسكّر مؤشر التحميل
+      Navigator.pop(context); // يسكّر شاشة الفلاتر
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.pop(
+        context,
+      ); // يسكّر مؤشر التحميل بس، وبتضل شاشة الفلاتر مفتوحة
+      final message = e is ApiException
+          ? e.message
+          : (isEn
+                ? 'Could not reach the server, please try again.'
+                : 'تعذّر الاتصال بالسيرفر، حاول مجدداً.');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   String _sortLabel(BuildContext context, SortOption option) {
@@ -505,13 +626,15 @@ class _DoctorFiltersView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: SortOption.values
-              .map((option) => ListTile(
-                    title: Text(_sortLabel(context, option)),
-                    onTap: () {
-                      cubit.setSortBy(option);
-                      Navigator.pop(sheetContext);
-                    },
-                  ))
+              .map(
+                (option) => ListTile(
+                  title: Text(_sortLabel(context, option)),
+                  onTap: () {
+                    cubit.setSortBy(option);
+                    Navigator.pop(sheetContext);
+                  },
+                ),
+              )
               .toList(),
         ),
       ),
@@ -532,15 +655,67 @@ class _DoctorFiltersView extends StatelessWidget {
           children: [
             Padding(
               padding: EdgeInsets.all(16.r),
-              child: Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16.sp)),
+              child: Text(
+                title,
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16.sp),
+              ),
             ),
-            ...options.map((option) => ListTile(
-                  title: Text(option),
-                  onTap: () {
-                    onSelected(option);
-                    Navigator.pop(sheetContext);
-                  },
-                )),
+            ...options.map(
+              (option) => ListTile(
+                title: Text(option),
+                onTap: () {
+                  onSelected(option);
+                  Navigator.pop(sheetContext);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Same bottom-sheet picker as [_pickFromList], but backed by the real
+  /// departments loaded from GET /departments (id + name) instead of a
+  /// hardcoded string list, so the selected value maps directly to a real
+  /// department_id with no fuzzy name matching needed.
+  void _pickDepartment({
+    required BuildContext context,
+    required String title,
+    required List<DepartmentModel> departments,
+    required ValueChanged<DepartmentModel?> onSelected,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: EdgeInsets.all(16.r),
+              child: Text(
+                title,
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16.sp),
+              ),
+            ),
+            if (departments.isEmpty)
+              Padding(
+                padding: EdgeInsets.all(16.r),
+                child: Text(
+                  Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'لا توجد أقسام متاحة'
+                      : 'No departments available',
+                ),
+              ),
+            ...departments.map(
+              (department) => ListTile(
+                title: Text(department.name),
+                onTap: () {
+                  onSelected(department);
+                  Navigator.pop(sheetContext);
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -556,7 +731,14 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: TextStyle(fontSize: size, fontWeight: FontWeight.w700, color: color));
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: size,
+        fontWeight: FontWeight.w700,
+        color: color,
+      ),
+    );
   }
 }
 
@@ -584,12 +766,22 @@ class _SearchField extends StatelessWidget {
       style: TextStyle(color: textColor, fontSize: bodySize),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: AppColors.textLightGrey, fontSize: bodySize),
-        prefixIcon: Icon(Icons.search_rounded, color: AppColors.textLightGrey, size: 20.sp),
+        hintStyle: TextStyle(
+          color: AppColors.textLightGrey,
+          fontSize: bodySize,
+        ),
+        prefixIcon: Icon(
+          Icons.search_rounded,
+          color: AppColors.textLightGrey,
+          size: 20.sp,
+        ),
         filled: true,
         fillColor: cardBg,
         contentPadding: EdgeInsets.symmetric(vertical: 12.h),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }
@@ -623,7 +815,14 @@ class _QuickTagChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(color: borderColor, width: 1.w),
         ),
-        child: Text(label, style: TextStyle(fontSize: bodySize, color: textColor, fontWeight: FontWeight.w500)),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: bodySize,
+            color: textColor,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
     );
   }
@@ -663,15 +862,22 @@ class _NearMeButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.my_location_rounded,
-                size: 18.sp, color: isActive ? (isDark ? AppColors.darkBackground : AppColors.white) : primaryGreen),
+            Icon(
+              Icons.my_location_rounded,
+              size: 18.sp,
+              color: isActive
+                  ? (isDark ? AppColors.darkBackground : AppColors.white)
+                  : primaryGreen,
+            ),
             SizedBox(width: 8.w),
             Text(
               label,
               style: TextStyle(
                 fontSize: bodySize,
                 fontWeight: FontWeight.w700,
-                color: isActive ? (isDark ? AppColors.darkBackground : AppColors.white) : primaryGreen,
+                color: isActive
+                    ? (isDark ? AppColors.darkBackground : AppColors.white)
+                    : primaryGreen,
               ),
             ),
           ],
@@ -707,14 +913,21 @@ class _DropdownRow extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-        decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(12.r)),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(fontSize: bodySize, color: textColor, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontSize: bodySize,
+                  color: textColor,
+                  fontWeight: FontWeight.w500,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -757,7 +970,10 @@ class _RangeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(14.r),
-      decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(16.r)),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
       child: Column(
         children: [
           RangeSlider(
@@ -814,7 +1030,13 @@ class _ReadonlyValueBox extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: bodySize * 0.85, color: AppColors.textLightGrey)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: bodySize * 0.85,
+            color: AppColors.textLightGrey,
+          ),
+        ),
         SizedBox(height: 4.h),
         Container(
           width: double.infinity,
@@ -823,7 +1045,14 @@ class _ReadonlyValueBox extends StatelessWidget {
             border: Border.all(color: AppColors.borderGrey, width: 1.w),
             borderRadius: BorderRadius.circular(10.r),
           ),
-          child: Text(value, style: TextStyle(fontSize: bodySize, color: textColor, fontWeight: FontWeight.w600)),
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: bodySize,
+              color: textColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ],
     );
@@ -843,16 +1072,18 @@ class _PriceHistogram extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: heights
-            .map((h) => Expanded(
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 3.w),
-                    height: 60.h * h,
-                    decoration: BoxDecoration(
-                      color: primaryGreen.withOpacity(0.35 + (0.5 * h)),
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
+            .map(
+              (h) => Expanded(
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: 3.w),
+                  height: 60.h * h,
+                  decoration: BoxDecoration(
+                    color: primaryGreen.withOpacity(0.35 + (0.5 * h)),
+                    borderRadius: BorderRadius.circular(4.r),
                   ),
-                ))
+                ),
+              ),
+            )
             .toList(),
       ),
     );
@@ -887,18 +1118,28 @@ class _ToggleChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final child = Container(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 16.w : 8.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 16.w : 8.w,
+        vertical: 12.h,
+      ),
       decoration: BoxDecoration(
         color: selected ? primaryGreen.withOpacity(0.18) : cardBg,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: selected ? primaryGreen : borderColor, width: 1.w),
+        border: Border.all(
+          color: selected ? primaryGreen : borderColor,
+          width: 1.w,
+        ),
       ),
       alignment: Alignment.center,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 16.sp, color: selected ? primaryGreen : AppColors.textLightGrey),
+            Icon(
+              icon,
+              size: 16.sp,
+              color: selected ? primaryGreen : AppColors.textLightGrey,
+            ),
             SizedBox(width: 6.w),
           ],
           Text(
@@ -912,60 +1153,10 @@ class _ToggleChip extends StatelessWidget {
         ],
       ),
     );
-    return GestureDetector(onTap: onTap, child: compact ? child : SizedBox(width: double.infinity, child: child));
-  }
-}
-
-class _SegmentedRow extends StatelessWidget {
-  final Color cardBg;
-  final Color primaryGreen;
-  final Color textColor;
-  final double bodySize;
-  final List<(String, ConsultationTypeFilter)> options;
-  final ConsultationTypeFilter selected;
-  final ValueChanged<ConsultationTypeFilter> onSelected;
-
-  const _SegmentedRow({
-    required this.cardBg,
-    required this.primaryGreen,
-    required this.textColor,
-    required this.bodySize,
-    required this.options,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(4.r),
-      decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(14.r)),
-      child: Row(
-        children: options.map((option) {
-          final isSelected = option.$2 == selected;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onSelected(option.$2),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 10.h),
-                decoration: BoxDecoration(
-                  color: isSelected ? primaryGreen : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  option.$1,
-                  style: TextStyle(
-                    fontSize: bodySize,
-                    fontWeight: FontWeight.w700,
-                    color: isSelected ? AppColors.white : textColor,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
+    return GestureDetector(
+      onTap: onTap,
+      child: compact ? child : SizedBox(width: double.infinity, child: child),
     );
   }
 }
+

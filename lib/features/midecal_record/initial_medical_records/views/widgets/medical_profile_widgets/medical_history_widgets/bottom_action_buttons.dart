@@ -68,7 +68,7 @@ class BottomActionButtons extends StatelessWidget {
                 AppStrings.back(context), // جلب النص المترجم والموحد
                 style: TextStyle(
                   color: theme.textTheme.bodyLarge?.color,
-                  fontSize: 14 * scaleFactor, // دعم معامل تكبير الخط
+                  fontSize: 25 * scaleFactor, // دعم معامل تكبير الخط
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -98,7 +98,7 @@ class BottomActionButtons extends StatelessWidget {
                     AppStrings.nextStep(context), // جلب النص المترجم والموحد
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 14 * scaleFactor, // دعم معامل تكبير الخط
+                      fontSize: 25 * scaleFactor, // دعم معامل تكبير الخط
                       fontWeight: FontWeight.w600,
                     ),
                   ),

@@ -17,6 +17,7 @@ class MedicalOverviewState {
   final List<FamilyHistoryEntry> familyHistory;
   final List<Medication> medications;
   final List<AttachedFile> attachments;
+  final List<Encounter> encounters;
 
   const MedicalOverviewState({
     this.status = MedicalRecordLoadStatus.initial,
@@ -30,6 +31,7 @@ class MedicalOverviewState {
     this.familyHistory = const [],
     this.medications = const [],
     this.attachments = const [],
+    this.encounters = const [],
   });
 
   bool get isLoading => status == MedicalRecordLoadStatus.loading;
@@ -93,6 +95,7 @@ class MedicalOverviewState {
     List<FamilyHistoryEntry>? familyHistory,
     List<Medication>? medications,
     List<AttachedFile>? attachments,
+    List<Encounter>? encounters,
   }) {
     return MedicalOverviewState(
       status: status ?? this.status,
@@ -106,6 +109,7 @@ class MedicalOverviewState {
       familyHistory: familyHistory ?? this.familyHistory,
       medications: medications ?? this.medications,
       attachments: attachments ?? this.attachments,
+      encounters: encounters ?? this.encounters,
     );
   }
 }

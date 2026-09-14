@@ -80,6 +80,45 @@ class DoctorStrings {
   static String evening(BuildContext context) => _isEn(context) ? 'Evening' : 'المساء';
   static String available(BuildContext context) => _isEn(context) ? 'Available' : 'متاح';
   static String blocked(BuildContext context) => _isEn(context) ? 'Blocked' : 'محجوب';
+  // ✅ إضافة: كارد "Encounters" السابقة بشاشة السجل الطبي عند الطبيب
+  static String previousEncounters(BuildContext context) =>
+      _isEn(context) ? 'Previous Encounters' : 'الزيارات السابقة';
+  // ✅ إضافة: نصوص شاشة DoctorEncounterScreen (توثيق الزيارة السريرية)
+  static String clinicalNotes(BuildContext context) => _isEn(context) ? 'Clinical Notes' : 'الملاحظات السريرية';
+  static String diagnosis(BuildContext context) => _isEn(context) ? 'Diagnosis' : 'التشخيص';
+  static String prescriptions(BuildContext context) => _isEn(context) ? 'Prescriptions' : 'الوصفات الطبية';
+  static String inProgressBadge(BuildContext context) => _isEn(context) ? 'IN PROGRESS' : 'قيد الكشف';
+  static String encounterTitle(BuildContext context) =>
+      _isEn(context) ? 'Encounter Details & Clinical Record' : 'تفاصيل الزيارة والسجل السريري';
+  static String clinicalNotesHint(BuildContext context) => _isEn(context)
+      ? 'Document patient history, examination findings, and clinical reasoning...'
+      : 'وثّق تاريخ المريض، نتائج الفحص، والتحليل السريري...';
+  static String addNote(BuildContext context) => _isEn(context) ? 'Add Note' : 'إضافة ملاحظة';
+  static String diagnosisHint(BuildContext context) => _isEn(context) ? 'Diagnosis (e.g., Acute sinusitis)' : 'التشخيص (مثلاً: التهاب الجيوب الحاد)';
+  static String diagnosisDescriptionHint(BuildContext context) =>
+      _isEn(context) ? 'Description (optional)' : 'وصف إضافي (اختياري)';
+  static String addDiagnosis(BuildContext context) => _isEn(context) ? 'Add Diagnosis' : 'إضافة تشخيص';
+  static String addMedication(BuildContext context) => _isEn(context) ? 'Add Medication' : 'إضافة دواء';
+  static String drugName(BuildContext context) => _isEn(context) ? 'Drug Name' : 'اسم الدواء';
+  static String dosage(BuildContext context) => _isEn(context) ? 'Dosage' : 'الجرعة';
+  static String frequency(BuildContext context) => _isEn(context) ? 'Frequency' : 'عدد المرات';
+  static String finalizeEncounter(BuildContext context) => _isEn(context) ? 'FINALIZE ENCOUNTER' : 'إنهاء الزيارة';
+  static String medicationNotes(BuildContext context) => _isEn(context) ? 'Notes (optional)' : 'ملاحظات (اختياري)';
+  static String encounterButton(BuildContext context) => _isEn(context) ? 'Encounter' : 'بدء الكشف';
+  static String continueEncounter(BuildContext context) => _isEn(context) ? 'Continue Encounter' : 'متابعة الكشف';
+  // ✅ إضافة: عرض عمر/جنس المريض ببطاقة السجل الطبي عند الطبيب
+  static String yearsOld(BuildContext context) => _isEn(context) ? 'yrs' : 'سنة';
+  static String genderLabel(BuildContext context, String raw) {
+    final isEn = _isEn(context);
+    switch (raw.toLowerCase()) {
+      case 'male':
+        return isEn ? 'Male' : 'ذكر';
+      case 'female':
+        return isEn ? 'Female' : 'أنثى';
+      default:
+        return raw;
+    }
+  }
   static String lunchBreak(BuildContext context) => _isEn(context) ? 'Lunch Break' : 'استراحة غداء';
   static String duration(BuildContext context) => _isEn(context) ? 'Duration' : 'مدة الكشف';
   static String durationMinutes(BuildContext context, int minutes) =>
@@ -103,6 +142,17 @@ class DoctorStrings {
       _isEn(context) ? 'On vacation until $date' : 'بإجازة لحد $date';
   static String blockThisSlot(BuildContext context) => _isEn(context) ? 'Block this slot' : 'حجب هالوقت';
   static String slotBlocked(BuildContext context) => _isEn(context) ? 'Slot blocked' : 'تم حجب الوقت';
+  // ✅ إضافة: سلسلة نصوص إدارة الأوقات المحجوبة (block time management)
+  static String blockTime(BuildContext context) => _isEn(context) ? 'Block Time' : 'حجب أوقات';
+  static String blockedTimesTitle(BuildContext context) => _isEn(context) ? 'Blocked Times' : 'الأوقات المحجوبة';
+  static String noBlockedTimes(BuildContext context) => _isEn(context) ? 'No blocked times yet' : 'ما في أوقات محجوبة لهلق';
+  static String addBlockedTime(BuildContext context) => _isEn(context) ? 'Add blocked time' : 'إضافة وقت محجوب';
+  static String blockByDate(BuildContext context) => _isEn(context) ? 'One-time (specific date)' : 'مرّة وحدة (تاريخ محدد)';
+  static String blockByWeekday(BuildContext context) => _isEn(context) ? 'Recurring (every week)' : 'متكرر (كل أسبوع)';
+  static String selectDay(BuildContext context) => _isEn(context) ? 'Day' : 'اليوم';
+  static String everyWeekday(BuildContext context, String day) =>
+      _isEn(context) ? 'Every $day' : 'كل $day';
+  static String unblock(BuildContext context) => _isEn(context) ? 'Unblock' : 'إلغاء الحجب';
   static String save(BuildContext context) => _isEn(context) ? 'Save' : 'حفظ';
   static String appointment(BuildContext context) => _isEn(context) ? 'Appointment' : 'موعد';
 
@@ -130,10 +180,43 @@ class DoctorStrings {
       _isEn(context) ? 'Appointments' : 'المواعيد';
   static String upcoming(BuildContext context) =>
       _isEn(context) ? 'Upcoming' : 'قادمة';
+  static String history(BuildContext context) =>
+      _isEn(context) ? 'History' : 'السابقة';
+  static String checkedIn(BuildContext context) =>
+      _isEn(context) ? 'checkedIn' : 'حضر';
   static String completed(BuildContext context) =>
       _isEn(context) ? 'Completed' : 'مكتملة';
   static String cancelled(BuildContext context) =>
       _isEn(context) ? 'Cancelled' : 'ملغاة';
+  static String inProgress(BuildContext context) =>
+      _isEn(context) ? 'In progress' : 'جارية الآن';
+  static String noShow(BuildContext context) =>
+      _isEn(context) ? 'Did not attend' : 'لم يحضر';
+  static String startConsultation(BuildContext context) =>
+      _isEn(context) ? 'Start consultation' : 'ابدأ الكشف';
+  static String markNoShow(BuildContext context) =>
+      _isEn(context) ? 'Mark as no-show' : 'تحديد كـ لم يحضر';
+  static String cancelReasonHint(BuildContext context) =>
+      _isEn(context) ? 'Cancellation reason (optional)' : 'سبب الإلغاء (اختياري)';
+  static String patientMedicalRecord(BuildContext context) =>
+      _isEn(context) ? 'Medical Record' : 'السجل الطبي';
+  static String allergiesSection(BuildContext context) =>
+      _isEn(context) ? 'Allergies' : 'الحساسية';
+  static String activeProblemsSection(BuildContext context) =>
+      _isEn(context) ? 'Active Problems' : 'المشاكل الحالية';
+  static String medicationsSection(BuildContext context) =>
+      _isEn(context) ? 'Medications' : 'الأدوية';
+  static String attachmentsSection(BuildContext context) =>
+      _isEn(context) ? 'Attachments & Results' : 'المرفقات والنتائج';
+  static String noEntriesYet(BuildContext context) =>
+      _isEn(context) ? 'None recorded' : 'لا يوجد';
+  static String diagnosedLabel(BuildContext context) =>
+      _isEn(context) ? 'Diagnosed' : 'تاريخ التشخيص';
+  static String medicalRecordAccessRevoked(BuildContext context) => _isEn(context)
+      ? 'The patient has revoked access to their medical record for this appointment.'
+      : 'المريض سحب صلاحية الاطلاع على سجله الطبي لهالموعد.';
+  static String viewMedicalRecord(BuildContext context) =>
+      _isEn(context) ? 'View medical record' : 'عرض السجل الطبي';
   static String noAppointmentsYet(BuildContext context) => _isEn(context)
       ? 'No appointments here yet'
       : 'لا يوجد مواعيد هنا حتى الآن';
@@ -142,6 +225,8 @@ class DoctorStrings {
       : 'الحجوزات الجديدة التي يقوم بها المرضى عبر زر "حجز" ستظهر هنا.';
   static String markCompleted(BuildContext context) =>
       _isEn(context) ? 'Mark as completed' : 'تحديد كمكتمل';
+  static String openEncounter(BuildContext context) =>
+      _isEn(context) ? 'Open encounter' : 'فتح الزيارة';
   static String cancelAppointment(BuildContext context) =>
       _isEn(context) ? 'Cancel appointment' : 'إلغاء الموعد';
   static String cancelAppointmentConfirm(BuildContext context) => _isEn(context)

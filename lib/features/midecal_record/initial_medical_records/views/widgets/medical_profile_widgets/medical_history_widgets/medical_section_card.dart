@@ -87,7 +87,7 @@ class MedicalSectionCard extends StatelessWidget {
                         section.title,
                         style: TextStyle(
                           color: theme.textTheme.bodyLarge?.color,
-                          fontSize: 16 * scaleFactor, // دعم معامل تكبير الخط
+                          fontSize: 25 * scaleFactor, // دعم معامل تكبير الخط
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -184,7 +184,7 @@ class _AddNewButton extends StatelessWidget {
               style: TextStyle(
                 color: theme.primaryColor,
                 fontSize:
-                    12 *
+                    25 *
                     scaleFactor, // دعم معامل تكبير الخط للزر الفرعي لقراءة أوضح
                 fontWeight: FontWeight.w500,
               ),

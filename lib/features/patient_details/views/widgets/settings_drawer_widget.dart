@@ -7,6 +7,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../view_models/settings_drawer_cubit.dart';
 import '../../view_models/settings_drawer_state.dart';
+import '../../../auth/patient_auth/views/forget_password.dart';
 
 void showSettingsDrawer(BuildContext context) {
   final isEn = context.read<SettingsCubit>().state.locale.languageCode == 'en';
@@ -296,6 +297,31 @@ class SettingsDrawerContent extends StatelessWidget {
                                 ),
                               ),
 
+                              // ✅ إضافة: إعادة تعيين كلمة المرور - نفس شاشة
+                              // "نسيت كلمة المرور" الحقيقية المستخدمة بتسجيل
+                              // الدخول (ForgotPasswordScreen: بريد + كود
+                              // تحقق + كلمة مرور جديدة عبر /auth/forgot-password
+                              // و/auth/reset-password)، بس هلق قابلة
+                              // للوصول من داخل الإعدادات لمستخدم مسجّل
+                              // دخوله. مشتركة بين شاشة المريض والطبيب لأن
+                              // showSettingsDrawer نفسه مستخدم بالاثنين.
+                              _buildSimpleClickableRow(
+                                Icons.lock_reset_rounded,
+                                AppStrings.resetPassword(context),
+                                itemTextSize,
+                                containerBgColor,
+                                borderColor,
+                                textColor,
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                                  );
+                                },
+                              ),
+                              SizedBox(height: 12.h),
+
                               Padding(
                                 padding: EdgeInsets.symmetric(vertical: 8.h),
                                 child: Divider(color: borderColor),
@@ -365,9 +391,9 @@ class SettingsDrawerContent extends StatelessWidget {
     );
   }
 
-  static Widget _buildSimpleClickableRow(IconData icon, String title, double textSize, Color bgColor, Color borderColor, Color textColor) {
+  static Widget _buildSimpleClickableRow(IconData icon, String title, double textSize, Color bgColor, Color borderColor, Color textColor, {VoidCallback? onTap}) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap ?? () {},
       child: _buildContainerWrapper(
         bgColor: bgColor,
         borderColor: borderColor,

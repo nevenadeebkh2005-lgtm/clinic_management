@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:untitled3/core/constants/setting.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_strings_doctor.dart';
@@ -8,10 +9,13 @@ import '../../../core/theme/app_colors.dart';
 import '../../patient_details/screens/widgets/confirm_action_dialog.dart';
 import '../../patient_details/views/widgets/settings_drawer_widget.dart';
 import '../../auth/Login.dart';
+import '../../auth/patient_auth/views/forget_password.dart';
 import '../models/doctor_profile_models.dart';
 import '../data/doctor_repository.dart';
+import '../../../core/network/api_exception.dart';
 import '../view_models/doctor_home_cubit.dart';
 import 'join_clinic_screen.dart';
+import '../../payments/screens/doctor_wallet_screen.dart';
 
 /// بروفايل الطبيب الكامل + الإعدادات - نفس بنية PatientProfileScreen
 /// حرفياً (نفس الأقسام/الأحجام/الألوان) بس بحقول طبيب حقيقية (مسيرة
@@ -90,10 +94,148 @@ class DoctorProfileScreen extends StatelessWidget {
       try {
         await DoctorRepository().updateClinicFee(clinicId: clinic.id, fee: fee);
         if (context.mounted) context.read<DoctorHomeCubit>().load();
-      } catch (e) {
+      } on ApiException catch (e) {
+        // ✅ إصلاح: كانت هون عم تعرض `'$e'` مباشرة (نص الاستثناء الخام
+        // بلغة الكود، متل "ApiException: ...")، وهو اللي كان يبان
+        // للمستخدم وكأنه "اكسبشن" غريب حتى لو الباك قبل الطلب فعلياً.
+        // هلق منعرض e.message المقروء فقط.
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFC0392B)),
+            SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFC0392B)),
+          );
+        }
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.somethingWentWrong(context)), backgroundColor: const Color(0xFFC0392B)),
+          );
+        }
+      }
+    }
+  }
+
+  /// ✅ إصلاح: زر "تعديل الملف الشخصي" كان `onPressed: () {}` فاضي
+  /// تماماً - ما بيعمل أي شي إطلاقاً رغم إنو DoctorRepository.updateProfile()
+  /// و PUT /doctor/profile جاهزين وشغالين فعلياً بالباك (راجع Postman:
+  /// Doctor / update doctor profile). هلق عم نفتح شيت تعديل حقيقي
+  /// للحقول الأساسية (first_name/last_name/phone/address/biography)
+  /// وننادي الـ API فعلياً، وبعد النجاح نعمل reload لـ DoctorHomeCubit
+  /// حتى ينعكس التعديل فوراً بكل الشاشة (بفضل التصحيح فوق).
+  /// ✅ رفع/تغيير صورة الطبيب - POST /doctor/profile/photo (كانت
+  /// DoctorRepository.updatePhoto() جاهزة وشغالة بالباك، بس ما في أي
+  /// عنصر بالواجهة كان ينادي عليها - أيقونة الكاميرا كانت شكل بس بدون
+  /// GestureDetector).
+  Future<void> _pickAndUploadPhoto(BuildContext context) async {
+    final picker = ImagePicker();
+    final XFile? file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (file == null || !context.mounted) return;
+    try {
+      final bytes = await file.readAsBytes();
+      if (!context.mounted) return;
+      await DoctorRepository().updatePhoto(bytes, file.name);
+      if (context.mounted) context.read<DoctorHomeCubit>().load();
+    } on ApiException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFC0392B)),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.somethingWentWrong(context)), backgroundColor: const Color(0xFFC0392B)),
+        );
+      }
+    }
+  }
+
+  Future<void> _showEditProfileSheet(BuildContext context, DoctorProfileInfo profile) async {
+    final firstNameCtrl = TextEditingController(text: profile.firstName);
+    final lastNameCtrl = TextEditingController(text: profile.lastName);
+    final phoneCtrl = TextEditingController(text: profile.phone ?? '');
+    final addressCtrl = TextEditingController(text: profile.address ?? '');
+    final bioCtrl = TextEditingController(text: profile.biography ?? '');
+
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20.w,
+            right: 20.w,
+            top: 20.h,
+            bottom: 20.h + MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppStrings.editProfile(sheetContext), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                SizedBox(height: 14.h),
+                TextField(
+                  controller: firstNameCtrl,
+                  decoration: InputDecoration(labelText: AppStrings.firstName(sheetContext), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 10.h),
+                TextField(
+                  controller: lastNameCtrl,
+                  decoration: InputDecoration(labelText: AppStrings.lastName(sheetContext), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 10.h),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(labelText: AppStrings.phoneNumber(sheetContext), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 10.h),
+                TextField(
+                  controller: addressCtrl,
+                  decoration: InputDecoration(labelText: AppStrings.address(sheetContext), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 10.h),
+                TextField(
+                  controller: bioCtrl,
+                  maxLines: 3,
+                  decoration: InputDecoration(labelText: DoctorStrings.biography(sheetContext), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 16.h),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46.h,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(sheetContext, true),
+                    child: Text(DoctorStrings.save(sheetContext)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (saved == true && context.mounted) {
+      try {
+        await DoctorRepository().updateProfile({
+          'first_name': firstNameCtrl.text.trim(),
+          'last_name': lastNameCtrl.text.trim(),
+          'phone': phoneCtrl.text.trim(),
+          'address': addressCtrl.text.trim(),
+          'biography': bioCtrl.text.trim(),
+        });
+        if (context.mounted) context.read<DoctorHomeCubit>().load();
+      } on ApiException catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFC0392B)),
+          );
+        }
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.somethingWentWrong(context)), backgroundColor: const Color(0xFFC0392B)),
           );
         }
       }
@@ -102,6 +244,22 @@ class DoctorProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ إصلاح: هاي الشاشة كانت بتاخد profile مرّة وحدة بالـ constructor
+    // (لحظة الدخول من doctor_home_screen)، وما كانت بتعيد بناء نفسها
+    // أبداً بعدها. نتيجة هيك: تعديل رسم الكشف (أو أي تعديل تاني عالبروفايل)
+    // كان بينجح فعلياً بالباك (PUT بيرجع 200) بس الواجهة تضل عارضة القيمة
+    // القديمة، وأي محاولة استخدام لاحقة لـ clinic.id/consultationFee
+    // القديمين (متل فتح شيت تعديل الرسم مرة تانية على بيانات غير محدّثة)
+    // كانت تسبب استثناء أو سلوك غير متوقع. الحل: نسحب الـ profile الحيّة
+    // من DoctorHomeCubit (نفس الكيوبت يلي `_showEditFeeSheet` بينادي
+    // .load() عليه بعد الحفظ) عبر context.watch، فأي تحديث فيه بيعيد
+    // بناء الشاشة تلقائياً بالقيم الجديدة. الاسم المحلي profile هون
+    // بيغطي (shadow) الحقل widget.profile لبقية الدالة، فكل الأسطر
+    // تحت يلي بتستخدم profile.* بتصير عم تقرأ من الحالة الحيّة تلقائياً
+    // بدون ما نعدّل مئات الأسطر.
+    final profile = context.watch<DoctorHomeCubit>().state.profile.doctorId != null
+        ? context.watch<DoctorHomeCubit>().state.profile
+        : this.profile;
     final settingsState = context.watch<SettingsCubit>().state;
     final settingsCubit = context.read<SettingsCubit>();
     final isEn = settingsState.locale.languageCode == 'en';
@@ -169,15 +327,18 @@ class DoctorProfileScreen extends StatelessWidget {
                     bottom: 0,
                     right: isEn ? 0 : null,
                     left: isEn ? null : 0,
-                    child: Container(
-                      width: 30.r,
-                      height: 30.r,
-                      decoration: BoxDecoration(
-                        color: primaryGreenColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: scaffoldBg, width: 2.w),
+                    child: GestureDetector(
+                      onTap: () => _pickAndUploadPhoto(context),
+                      child: Container(
+                        width: 30.r,
+                        height: 30.r,
+                        decoration: BoxDecoration(
+                          color: primaryGreenColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: scaffoldBg, width: 2.w),
+                        ),
+                        child: Icon(Icons.camera_alt_rounded, color: AppColors.white, size: 14.sp),
                       ),
-                      child: Icon(Icons.camera_alt_rounded, color: AppColors.white, size: 14.sp),
                     ),
                   ),
                 ],
@@ -200,7 +361,7 @@ class DoctorProfileScreen extends StatelessWidget {
             SizedBox(height: 10.h),
             Center(
               child: OutlinedButton.icon(
-                onPressed: () {},
+                onPressed: () => _showEditProfileSheet(context, profile),
                 icon: Icon(Icons.edit_outlined, size: 16.sp, color: primaryGreenColor),
                 label: Text(AppStrings.editProfile(context), style: TextStyle(color: primaryGreenColor, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
@@ -420,12 +581,32 @@ class DoctorProfileScreen extends StatelessWidget {
             SizedBox(height: 10.h),
             _InfoCard(cardBg: cardBg, children: [
               _ActionRow(
+                icon: Icons.account_balance_wallet_outlined,
+                label: AppStrings.myWallet(context),
+                textColor: textColor,
+                labelSize: rowValueSize,
+                trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textLightGrey),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DoctorWalletScreen()),
+                ),
+              ),
+              _rowDivider(),
+              _ActionRow(
                 icon: Icons.lock_outline_rounded,
                 label: AppStrings.changePassword(context),
                 textColor: textColor,
                 labelSize: rowValueSize,
                 trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textLightGrey),
-                onTap: () {},
+                // ✅ إصلاح: كان onPressed فاضي تماماً. "تغيير كلمة المرور"
+                // هون بالضبط نفس تدفق "نسيت كلمة المرور" (إيميل → كود
+                // بالإيميل → كلمة مرور جديدة)، فبنعيد استخدام نفس الشاشة
+                // والـ Cubit الموجودين أصلاً (ForgotPasswordScreen) بدل
+                // ما نبني شاشة/منطق مختلف من الصفر.
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                ),
               ),
               _rowDivider(),
               _ActionRow(

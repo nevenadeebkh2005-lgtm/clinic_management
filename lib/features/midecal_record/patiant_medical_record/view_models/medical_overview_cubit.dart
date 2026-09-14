@@ -6,6 +6,7 @@ import '../../initial_medical_records/models/medical_history_models.dart';
 import '../../initial_medical_records/models/medication_model.dart';
 import '../../initial_medical_records/models/attached_model.dart';
 import '../models/medical_record_models/dashboard_overview_models.dart';
+import '../../../doctor_details/models/encounter_models.dart';
 
 part 'medical_overview_state.dart';
 
@@ -57,6 +58,7 @@ class MedicalOverviewCubit extends Cubit<MedicalOverviewState> {
         familyHistory: parseList(medicalHistory['family_history'], FamilyHistoryEntry.fromJson),
         medications: parseList(record['medications'], Medication.fromJson),
         attachments: parseList(record['attachments'], AttachedFile.fromJson),
+        encounters: parseList(record['encounters'], Encounter.fromJson),
       ));
     } on ApiException catch (e) {
       emit(state.copyWith(status: MedicalRecordLoadStatus.failure, errorMessage: e.message));

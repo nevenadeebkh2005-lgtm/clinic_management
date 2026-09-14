@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/doctor_dummy_data.dart';
 import '../../view_models/doctor_listing_cubit.dart';
+import '../../view_models/patient_appointments_cubit.dart';
 import '../../../../core/cubits/medical_record_status_cubit.dart';
 import '../doctor_profile_screen.dart';
 
@@ -43,10 +44,12 @@ class HomeDoctorTile extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         // ⚠️ 19/8: نفس مشكلة doctor_card_widget - لازم نمرر
-        // MedicalRecordStatusCubit و DoctorListingCubit للشاشة المفتوحة
-        // (راجع تعليق مشابه هناك) وإلا بيصير ProviderNotFoundException.
+        // MedicalRecordStatusCubit و DoctorListingCubit و
+        // PatientAppointmentsCubit للشاشة المفتوحة (راجع تعليق مشابه
+        // هناك) وإلا بيصير ProviderNotFoundException.
         final doctorListingCubit = context.read<DoctorListingCubit>();
         final medicalRecordStatusCubit = context.read<MedicalRecordStatusCubit>();
+        final appointmentsCubit = context.read<PatientAppointmentsCubit>();
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -54,6 +57,7 @@ class HomeDoctorTile extends StatelessWidget {
               providers: [
                 BlocProvider.value(value: doctorListingCubit),
                 BlocProvider.value(value: medicalRecordStatusCubit),
+                BlocProvider.value(value: appointmentsCubit),
               ],
               child: DoctorProfileScreen(doctor: doc),
             ),
@@ -84,7 +88,7 @@ class HomeDoctorTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(doc.fullName, style: TextStyle(fontSize: nameSize, fontWeight: FontWeight.w700, color: textColor), overflow: TextOverflow.ellipsis),
-                      Text(doc.subSpecialty, style: TextStyle(fontSize: subSize, color: AppColors.textLightGrey), overflow: TextOverflow.ellipsis),
+                      Text(doc.department, style: TextStyle(fontSize: subSize, color: AppColors.textLightGrey), overflow: TextOverflow.ellipsis),
                       if (doc.workplaceNames.isNotEmpty)
                         Row(
                           children: [

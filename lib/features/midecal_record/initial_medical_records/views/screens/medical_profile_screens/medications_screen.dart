@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 // --- Models ---
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/constants/setting.dart';
+import '../../../../../../core/cubits/medical_record_status_cubit.dart';
 // --- Widgets ---
 import '../../../models/medication_model.dart';
 import '../../../view_models/medication_cubit.dart';
@@ -51,10 +52,20 @@ class _MedicationsView extends StatelessWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: BottomActionButtons(
         onBack: () => Navigator.pop(context),
-        onNextStep: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AttachmentScreen()),
-        ),
+        onNextStep: () {
+          // ⚠️ 19/8: تمرير MedicalRecordStatusCubit - نفس السبب المشروح
+          // بباقي خطوات المعالج.
+          final medicalRecordStatusCubit = context.read<MedicalRecordStatusCubit>();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BlocProvider.value(
+                value: medicalRecordStatusCubit,
+                child: const AttachmentScreen(),
+              ),
+            ),
+          );
+        },
       ),
       body: BlocConsumer<MedicationsCubit, MedicationsState>(
         listener: (context, state) {
@@ -88,7 +99,7 @@ class _MedicationsView extends StatelessWidget {
         AppStrings.medicalProfileTitle(context),
         style: TextStyle(
           color: theme.textTheme.bodyLarge?.color,
-          fontSize: 17 * scaleFactor,
+          fontSize: 25 * scaleFactor,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -129,7 +140,7 @@ class _MedicationsView extends StatelessWidget {
                   isEn ? 'Mark as stopped' : 'إيقاف الدواء',
                   style: TextStyle(
                     color: theme.textTheme.bodyLarge?.color,
-                    fontSize: 16 * scaleFactor,
+                    fontSize: 25 * scaleFactor,
                   ),
                 ),
                 onTap: () {
@@ -144,7 +155,7 @@ class _MedicationsView extends StatelessWidget {
               leading: const Icon(Icons.delete_outline, color: Color(0xFFD32F2F)),
               title: Text(
                 isEn ? 'Delete' : 'حذف',
-                style: TextStyle(color: const Color(0xFFD32F2F), fontSize: 16 * scaleFactor),
+                style: TextStyle(color: const Color(0xFFD32F2F), fontSize: 25 * scaleFactor),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -171,7 +182,7 @@ class _MedicationsView extends StatelessWidget {
             AppStrings.medicationsTitle(context),
             style: TextStyle(
               color: theme.textTheme.bodyLarge?.color,
-              fontSize: 24 * scaleFactor,
+              fontSize: 25 * scaleFactor,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -180,7 +191,7 @@ class _MedicationsView extends StatelessWidget {
             AppStrings.medicationsDesc(context),
             style: TextStyle(
               color: theme.textTheme.bodyMedium?.color,
-              fontSize: 13 * scaleFactor,
+              fontSize: 25 * scaleFactor,
               height: 1.5,
             ),
           ),

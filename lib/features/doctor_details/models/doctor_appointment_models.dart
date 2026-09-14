@@ -1,84 +1,73 @@
-/// حالة الموعد كما يديرها الطبيب: قادم (لسا رح يجي) / مكتمل (المريض
-/// اجا فعلاً) / ملغى.
-enum DoctorAppointmentStatus { upcoming, completed, cancelled }
+import '../../../core/constants/appointment_status.dart';
 
-DoctorAppointmentStatus doctorAppointmentStatusFromString(String raw) {
-  switch (raw) {
-    case 'completed':
-      return DoctorAppointmentStatus.completed;
-    case 'cancelled':
-      return DoctorAppointmentStatus.cancelled;
-    default:
-      return DoctorAppointmentStatus.upcoming;
-  }
-}
-
-extension DoctorAppointmentStatusX on DoctorAppointmentStatus {
-  String get asString {
-    switch (this) {
-      case DoctorAppointmentStatus.completed:
-        return 'completed';
-      case DoctorAppointmentStatus.cancelled:
-        return 'cancelled';
-      case DoctorAppointmentStatus.upcoming:
-        return 'upcoming';
-    }
-  }
-}
-
-/// موعد محجوز من طرف مريض عبر زر "Book" (راجع ملاحظة data/doctor
-/// _appointments_repository.dart بخصوص عدم وجود endpoint حجوزات بعد).
+/// موعد محجوز من طرف مريض عبر زر "احجز الآن" - نظام الحجوزات الحقيقي
+/// (Postman: Appointment/Doctor). ما عاد وهمي/محلي، صار مربوط بالباك
+/// فعلياً (GET /doctor/appointments وباقي إجراءات start/complete/cancel/
+/// no-show).
 class DoctorAppointment {
-  final String id;
+  final int id;
   final String patientName;
+  final int? patientId;
   final String? patientAvatarUrl;
   final String? clinicName;
-  final DateTime dateTime;
-  final DoctorAppointmentStatus status;
-  final String? reason;
-  final DateTime bookedAt;
+  final int? clinicId;
+  final DateTime startsAt;
+  final DateTime endsAt;
+  final AppointmentApiStatus status;
+  final String? notes;
+  final String? cancellationReason;
+  final num? price;
+  final String encounterType;
+  final DateTime createdAt;
 
   const DoctorAppointment({
     required this.id,
     required this.patientName,
+    this.patientId,
     this.patientAvatarUrl,
     this.clinicName,
-    required this.dateTime,
+    this.clinicId,
+    required this.startsAt,
+    required this.endsAt,
     required this.status,
-    this.reason,
-    required this.bookedAt,
+    this.notes,
+    this.cancellationReason,
+    this.price,
+    this.encounterType = 'in_person',
+    required this.createdAt,
   });
 
-  DoctorAppointment copyWith({DoctorAppointmentStatus? status}) => DoctorAppointment(
-        id: id,
-        patientName: patientName,
-        patientAvatarUrl: patientAvatarUrl,
-        clinicName: clinicName,
-        dateTime: dateTime,
-        status: status ?? this.status,
-        reason: reason,
-        bookedAt: bookedAt,
-      );
+  /// ✅ للتوافق مع الكود القديم يلي كان بيستخدم dateTime كاسم موحّد.
+  DateTime get dateTime => startsAt;
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'patient_name': patientName,
-        'patient_avatar_url': patientAvatarUrl,
-        'clinic_name': clinicName,
-        'date_time': dateTime.toIso8601String(),
-        'status': status.asString,
-        'reason': reason,
-        'booked_at': bookedAt.toIso8601String(),
-      };
+  /// ✅ للتوافق مع الكود القديم يلي كان بيستخدم reason - صار notes
+  /// فعلياً بالباك.
+  String? get reason => notes;
 
-  factory DoctorAppointment.fromJson(Map<String, dynamic> json) => DoctorAppointment(
-        id: json['id'].toString(),
-        patientName: json['patient_name']?.toString() ?? '',
-        patientAvatarUrl: json['patient_avatar_url']?.toString(),
-        clinicName: json['clinic_name']?.toString(),
-        dateTime: DateTime.tryParse(json['date_time']?.toString() ?? '') ?? DateTime.now(),
-        status: doctorAppointmentStatusFromString(json['status']?.toString() ?? 'upcoming'),
-        reason: json['reason']?.toString(),
-        bookedAt: DateTime.tryParse(json['booked_at']?.toString() ?? '') ?? DateTime.now(),
-      );
+  /// ✅ للتوافق مع الكود القديم - createdAt هو نفسه "تاريخ الحجز".
+  DateTime get bookedAt => createdAt;
+
+  AppointmentTabGroup get tabGroup => status.tabGroup;
+
+  factory DoctorAppointment.fromJson(Map<String, dynamic> json) {
+    final slot = json['slot'] is Map ? Map<String, dynamic>.from(json['slot']) : const <String, dynamic>{};
+    final patient = json['patient'] is Map ? Map<String, dynamic>.from(json['patient']) : const <String, dynamic>{};
+    final clinic = json['clinic'] is Map ? Map<String, dynamic>.from(json['clinic']) : const <String, dynamic>{};
+    return DoctorAppointment(
+      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
+      patientName: patient['name']?.toString() ?? '',
+      patientId: patient['id'] is int ? patient['id'] as int : int.tryParse('${patient['id']}'),
+      patientAvatarUrl: patient['avatar_url']?.toString(),
+      clinicName: clinic['name']?.toString(),
+      clinicId: clinic['id'] is int ? clinic['id'] as int : int.tryParse('${clinic['id']}'),
+      startsAt: DateTime.tryParse(slot['starts_at']?.toString() ?? '') ?? DateTime.now(),
+      endsAt: DateTime.tryParse(slot['ends_at']?.toString() ?? '') ?? DateTime.now(),
+      status: appointmentApiStatusFromString(json['status']?.toString() ?? 'scheduled'),
+      notes: json['notes']?.toString(),
+      cancellationReason: json['cancellation_reason']?.toString(),
+      price: json['price'] is num ? json['price'] as num : num.tryParse('${json['price']}'),
+      encounterType: json['encounter_type']?.toString() ?? 'in_person',
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
+    );
+  }
 }

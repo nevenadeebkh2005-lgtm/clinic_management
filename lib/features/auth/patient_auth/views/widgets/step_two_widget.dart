@@ -57,18 +57,33 @@ class StepTwoWidgets extends StatelessWidget {
                   errorText: _fieldError(fieldErrors, 'dob'),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
                 ),
-                onTap: () async {
-                  final pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now().subtract(const Duration(days: 365 * 20)),
-                    firstDate: DateTime(1900),
-                    lastDate: DateTime.now(),
-                  );
-                  if (pickedDate != null) {
-                    final formattedDate = "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
-                    cubit.updateRegisterModel(state.model.copyWith(dateOfBirth: formattedDate));
-                  }
-                },
+                  onTap: () async {
+                    final pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now().subtract(const Duration(days: 365 * 20)),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                      builder: (context, child) {
+                        return MediaQuery(
+                          data: MediaQuery.of(context).copyWith(
+                            textScaleFactor: 1.0,
+                          ),
+                          child: Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: Theme.of(context).colorScheme.copyWith(
+                                primary: AppColors.primaryGreen,
+                              ),
+                            ),
+                            child: child!,
+                          ),
+                        );
+                      },
+                    );
+                    if (pickedDate != null) {
+                      final formattedDate = "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+                      cubit.updateRegisterModel(state.model.copyWith(dateOfBirth: formattedDate));
+                    }
+                  },
               ),
               SizedBox(height: 20.h),
 

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/constants/app_strings.dart';
+import '../../../../../../core/cubits/medical_record_status_cubit.dart';
 import '../../../models/medical_record_models/dashboard_overview_models.dart';
 import '../../../view_models/medical_overview_cubit.dart';
 import '../../widgets/medical_records_widgets/dashboard_overview_widgets/overview_cards.dart';
@@ -13,6 +14,7 @@ import '../../widgets/medical_records_widgets/dashboard_overview_widgets/recent_
 import '../../widgets/medical_records_widgets/comprehensive_history_widgets/history_tab_view.dart';
 import '../../widgets/medical_records_widgets/medications_widgets/medications_tab_view.dart';
 import '../../widgets/medical_records_widgets/medical_attachments_widgets/attachments_tab_view.dart';
+import '../../widgets/medical_records_widgets/encounter_widgets/encounter_tab_view.dart';
 import '../../../../initial_medical_records/views/screens/medical_profile_screens/medical_history_screen.dart';
 
 // =============================================
@@ -131,11 +133,28 @@ class NoMedicalRecordScreen extends StatelessWidget {
                     ),
                     // إذا ما انمرر onStart مخصص من برا، الزر بيروح افتراضياً
                     // على أول خطوة بمعالج الإدخال (MedicalHistoryScreen).
+                    // ⚠️ 19/8: نفس مشكلة DoctorProfileScreen (راجع
+                    // doctor_card_widget.dart) - MedicalRecordStatusCubit
+                    // موفّر بس جوا MainLayoutScreen، وكل خطوة من هالمعالج
+                    // (History/Medications/Attachments/Review) بتنفتح
+                    // بـ Navigator.push جديد بيطلعها خارج شجرة الـ Provider
+                    // هاي. لازم نمرر الكيوبت يدوياً بكل قفزة عبر
+                    // BlocProvider.value (نفس الشي لازم ينعمل بباقي
+                    // الشاشات بالمعالج - راجع تعليق مماثل فيهن).
                     onPressed: onStart ??
-                        () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const MedicalHistoryScreen()),
+                        () {
+                          final medicalRecordStatusCubit =
+                              context.read<MedicalRecordStatusCubit>();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BlocProvider.value(
+                                value: medicalRecordStatusCubit,
+                                child: const MedicalHistoryScreen(),
+                              ),
                             ),
+                          );
+                        },
                     child: Text(
                       AppStrings.startMedicalRecord(context),
                       style: TextStyle(color: Colors.white, fontSize: 15.sp, fontWeight: FontWeight.bold),
@@ -183,6 +202,27 @@ class _MedicalOverviewView extends StatelessWidget {
                   selectedIndex: state.selectedTabIndex,
                   onTabSelected: cubit.changeTab,
                   onRefresh: () => cubit.loadMedicalRecord(),
+                  // ✅ إصلاح "الميديكال ريكورد غير قابل للتعديل": قبل
+                  // هيك، بعد أول تعبئة للسجل ما كان في ولا زر يرجّع
+                  // المريض لمعالج الإدخال (History/Medications/
+                  // Attachments) - بس Refresh. هلق منفتح نفس المعالج
+                  // (MedicalHistoryScreen وما بعدها) ومعه MedicalRecordStatusCubit
+                  // (نفس الطريقة المستخدمة بـ NoMedicalRecordScreen تحت)،
+                  // وبعد الرجوع منعمل loadMedicalRecord() حتى ينعكس أي
+                  // تعديل فوراً بالـ Dashboard.
+                  onEdit: () async {
+                    final medicalRecordStatusCubit = context.read<MedicalRecordStatusCubit>();
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider.value(
+                          value: medicalRecordStatusCubit,
+                          child: const MedicalHistoryScreen(),
+                        ),
+                      ),
+                    );
+                    if (context.mounted) cubit.loadMedicalRecord();
+                  },
                 ),
 
                 Divider(height: 1, color: isDarkMode ? Colors.white10 : AppColors.borderGrey),
@@ -253,6 +293,8 @@ class _MedicalOverviewView extends StatelessWidget {
         return MedicationsTabView(state: state);
       case 3:
         return AttachmentsTabView(state: state);
+      case 4:
+        return EncounterTabView(encounters: state.encounters);
       default:
         return _buildOverviewTab(context, state, cubit);
     }

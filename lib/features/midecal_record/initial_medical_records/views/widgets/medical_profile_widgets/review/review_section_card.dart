@@ -59,7 +59,7 @@ class ReviewSectionCard extends StatelessWidget {
                     title,
                     style: TextStyle(
                       color: theme.textTheme.bodyLarge?.color,
-                      fontSize: 16 * scaleFactor,
+                      fontSize: 25 * scaleFactor,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -79,7 +79,7 @@ class ReviewSectionCard extends StatelessWidget {
                         isEn ? 'Edit' : 'تعديل',
                         style: TextStyle(
                           color: theme.primaryColor,
-                          fontSize: 13 * scaleFactor,
+                          fontSize: 25 * scaleFactor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -130,7 +130,7 @@ class ReviewInfoField extends StatelessWidget {
             label,
             style: TextStyle(
               color: theme.textTheme.bodyMedium?.color?.withOpacity(0.55),
-              fontSize: 12 * scaleFactor,
+              fontSize: 25 * scaleFactor,
             ),
           ),
           const SizedBox(height: 3),
@@ -138,7 +138,7 @@ class ReviewInfoField extends StatelessWidget {
             value,
             style: TextStyle(
               color: theme.textTheme.bodyLarge?.color,
-              fontSize: 14 * scaleFactor,
+              fontSize: 25 * scaleFactor,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -183,7 +183,7 @@ class AllergyTag extends StatelessWidget {
             name,
             style: TextStyle(
               color: const Color(0xFFD32F2F),
-              fontSize: 12 * scaleFactor,
+              fontSize: 25 * scaleFactor,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -243,7 +243,7 @@ class ReviewMedCard extends StatelessWidget {
                   name,
                   style: TextStyle(
                     color: theme.textTheme.bodyLarge?.color,
-                    fontSize: 13 * scaleFactor,
+                    fontSize: 25 * scaleFactor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -252,7 +252,7 @@ class ReviewMedCard extends StatelessWidget {
                   details,
                   style: TextStyle(
                     color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
-                    fontSize: 12 * scaleFactor,
+                    fontSize: 25 * scaleFactor,
                   ),
                 ),
               ],
@@ -326,7 +326,7 @@ class ReviewAttachmentCard extends StatelessWidget {
                   name,
                   style: TextStyle(
                     color: theme.textTheme.bodyLarge?.color,
-                    fontSize: 13 * scaleFactor,
+                    fontSize: 25 * scaleFactor,
                     fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -336,7 +336,7 @@ class ReviewAttachmentCard extends StatelessWidget {
                   details,
                   style: TextStyle(
                     color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
-                    fontSize: 12 * scaleFactor,
+                    fontSize: 25 * scaleFactor,
                   ),
                 ),
               ],

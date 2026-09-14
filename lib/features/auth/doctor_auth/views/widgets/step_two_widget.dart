@@ -46,6 +46,13 @@ class StepTwoWidgets extends StatelessWidget {
                   hintText: AppStrings.dateOfBirthHint(context),
                   prefixIcon: const Icon(Icons.calendar_today_outlined),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                    borderSide: BorderSide(
+                      color: AppColors.primaryGreen,
+                      width: 2,
+                    ),
+                  ),
                 ),
                 onTap: () async {
                   final pickedDate = await showDatePicker(
@@ -53,6 +60,20 @@ class StepTwoWidgets extends StatelessWidget {
                     initialDate: DateTime.now().subtract(const Duration(days: 365 * 30)),
                     firstDate: DateTime(1940),
                     lastDate: DateTime.now(),
+                    builder: (context, child) {
+                      return MediaQuery(
+                        data: MediaQuery.of(context).copyWith(
+                          textScaleFactor: 1.0,
+                        ),
+                          child: Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: Theme.of(context).colorScheme.copyWith(
+                                primary: AppColors.primaryGreen,
+                              ),
+                            ),
+                        child: child!,
+                      ));
+                    },
                   );
                   if (pickedDate != null) {
                     final formattedDate =
@@ -81,10 +102,19 @@ class StepTwoWidgets extends StatelessWidget {
               SizedBox(height: 6.h),
               TextFormField(
                 initialValue: state.model.homeAddress,
+                cursorColor: AppColors.primaryGreen,
                 maxLines: 2,
                 decoration: InputDecoration(
                   hintText: AppStrings.homeAddress(context),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                    borderSide: BorderSide(
+                      color: AppColors.primaryGreen,
+                      width: 2,
+                    ),
+                  ),
                   contentPadding: EdgeInsets.all(12.w),
                 ),
                 onChanged: (value) => cubit.updateRegisterModel(state.model.copyWith(homeAddress: value)),
@@ -102,11 +132,19 @@ class StepTwoWidgets extends StatelessWidget {
               SizedBox(height: 6.h),
               TextFormField(
                 initialValue: state.model.phone,
+                cursorColor: AppColors.primaryGreen,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   hintText: AppStrings.phoneHint(context),
                   prefixIcon: const Icon(Icons.phone_outlined),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                    borderSide: BorderSide(
+                      color: AppColors.primaryGreen,
+                      width: 2,
+                    ),
+                  ),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
                 ),
                 onChanged: (value) => cubit.updateRegisterModel(state.model.copyWith(phone: value)),

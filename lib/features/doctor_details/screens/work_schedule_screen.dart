@@ -190,6 +190,18 @@ class _WorkScheduleBodyState extends State<_WorkScheduleBody> {
                     ),
                   ),
                 ],
+                SizedBox(height: 10.h),
+                // ✅ إضافة: إدارة الأوقات المحجوبة (block time) - كانت
+                // الإمكانية الوحيدة الموجودة سابقاً هي حجب Slot واحد من
+                // شاشة الأوقات المتاحة مباشرة (blockSlot)، بدون أي طريقة
+                // لعرض/حذف الأوقات المحجوبة أو حجب وقت متكرر بيوم أسبوعي.
+                _ActionChipButton(
+                  icon: Icons.block_rounded,
+                  label: DoctorStrings.blockTime(context),
+                  isDark: widget.isDark,
+                  highlighted: state.blockedTimes.isNotEmpty,
+                  onTap: () => _showBlockedTimesSheet(context, cubit, state),
+                ),
                 SizedBox(height: 18.h),
                 if (state.status == WorkScheduleStatus.loading)
                   Padding(
@@ -414,6 +426,224 @@ class _WorkScheduleBodyState extends State<_WorkScheduleBody> {
                         : () {
                             Navigator.pop(sheetContext);
                             cubit.activateVacation(start: start!, end: end!);
+                          },
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryGreen, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r))),
+                    child: Text(DoctorStrings.save(sheetContext), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  /// ✅ إضافة: شيت إدارة الأوقات المحجوبة - عرض اللائحة الحالية (من
+  /// getBlockedTimes) مع إمكانية حذف أي عنصر (deleteBlockedTime)، وزر
+  /// لإضافة حجب جديد إما بتاريخ محدد مرة وحدة أو متكرر بيوم أسبوعي.
+  void _showBlockedTimesSheet(BuildContext context, WorkScheduleCubit cubit, WorkScheduleState state) {
+    final isDark = widget.isDark;
+    final primaryGreen = isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen;
+    final textColor = isDark ? AppColors.darkText : AppColors.textDark;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? AppColors.darkCard : AppColors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
+      builder: (sheetContext) {
+        return BlocBuilder<WorkScheduleCubit, WorkScheduleState>(
+          bloc: cubit,
+          builder: (context, liveState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 28.h + MediaQuery.of(sheetContext).viewInsets.bottom),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(DoctorStrings.blockedTimesTitle(sheetContext),
+                          style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w800, color: primaryGreen)),
+                      IconButton(
+                        icon: Icon(Icons.add_circle_outline, color: primaryGreen),
+                        onPressed: () => _showAddBlockedTimeSheet(context, cubit),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8.h),
+                  if (liveState.blockedTimes.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 18.h),
+                      child: Text(DoctorStrings.noBlockedTimes(sheetContext),
+                          style: TextStyle(color: AppColors.textLightGrey, fontSize: 13.sp)),
+                    )
+                  else
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: 320.h),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: liveState.blockedTimes.length,
+                        separatorBuilder: (_, __) => SizedBox(height: 8.h),
+                        itemBuilder: (_, i) {
+                          final bt = liveState.blockedTimes[i];
+                          final label = bt.blockDate != null
+                              ? bt.blockDate!
+                              : DoctorStrings.everyWeekday(
+                                  sheetContext,
+                                  DoctorStrings.weekdayFull(sheetContext, bt.dayOfWeek == 0 ? 7 : (bt.dayOfWeek ?? 7)),
+                                );
+                          return Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC0392B).withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.block_rounded, size: 18.sp, color: const Color(0xFFC0392B)),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Text(
+                                    '$label  •  ${bt.startTime} - ${bt.endTime}',
+                                    style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: textColor),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => cubit.unblockTime(bt.id),
+                                  child: Text(DoctorStrings.unblock(sheetContext), style: const TextStyle(color: Color(0xFFC0392B))),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showAddBlockedTimeSheet(BuildContext context, WorkScheduleCubit cubit) {
+    final isDark = widget.isDark;
+    final primaryGreen = isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen;
+    final textColor = isDark ? AppColors.darkText : AppColors.textDark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.darkCard : AppColors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
+      builder: (sheetContext) {
+        bool recurring = false;
+        DateTime? date;
+        int weekday = 1; // DateTime convention: 1=Monday
+        TimeOfDay? start;
+        TimeOfDay? end;
+        return StatefulBuilder(builder: (sheetContext, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 28.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(DoctorStrings.addBlockedTime(sheetContext),
+                    style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w800, color: primaryGreen)),
+                SizedBox(height: 14.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        label: Text(DoctorStrings.blockByDate(sheetContext), style: TextStyle(fontSize: 11.5.sp)),
+                        selected: !recurring,
+                        onSelected: (_) => setSheetState(() => recurring = false),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: Text(DoctorStrings.blockByWeekday(sheetContext), style: TextStyle(fontSize: 11.5.sp)),
+                        selected: recurring,
+                        onSelected: (_) => setSheetState(() => recurring = true),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 14.h),
+                if (!recurring)
+                  _DatePickField(
+                    label: DoctorStrings.blockByDate(sheetContext),
+                    value: date,
+                    textColor: textColor,
+                    primaryGreen: primaryGreen,
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: sheetContext,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (picked != null) setSheetState(() => date = picked);
+                    },
+                  )
+                else
+                  DropdownButtonFormField<int>(
+                    value: weekday,
+                    decoration: InputDecoration(
+                      labelText: DoctorStrings.selectDay(sheetContext),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                    ),
+                    items: List.generate(7, (i) => i + 1)
+                        .map((d) => DropdownMenuItem(value: d, child: Text(DoctorStrings.weekdayFull(sheetContext, d))))
+                        .toList(),
+                    onChanged: (v) => setSheetState(() => weekday = v ?? 1),
+                  ),
+                SizedBox(height: 10.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          final picked = await showTimePicker(context: sheetContext, initialTime: start ?? const TimeOfDay(hour: 9, minute: 0));
+                          if (picked != null) setSheetState(() => start = picked);
+                        },
+                        child: Text(start == null ? DoctorStrings.startTime(sheetContext) : start!.format(sheetContext)),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          final picked = await showTimePicker(context: sheetContext, initialTime: end ?? const TimeOfDay(hour: 10, minute: 0));
+                          if (picked != null) setSheetState(() => end = picked);
+                        },
+                        child: Text(end == null ? DoctorStrings.endTime(sheetContext) : end!.format(sheetContext)),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16.h),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46.h,
+                  child: ElevatedButton(
+                    onPressed: (start == null || end == null || (!recurring && date == null))
+                        ? null
+                        : () {
+                            Navigator.pop(sheetContext);
+                            if (recurring) {
+                              // DoctorStrings.weekdayFull بتتوقع اتفاقية DateTime
+                              // (1=اثنين..7=أحد) - نحول لاتفاقية الباك (0=أحد..6=سبت)
+                              // نفس الطريقة المستخدمة بـ weekly_template_editor_screen.
+                              final backendDayOfWeek = weekday % 7;
+                              cubit.blockDayOfWeek(dayOfWeek: backendDayOfWeek, start: start!, end: end!);
+                            } else {
+                              cubit.blockDate(date: date!, start: start!, end: end!);
+                            }
                           },
                     style: ElevatedButton.styleFrom(
                         backgroundColor: primaryGreen, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r))),

@@ -55,14 +55,13 @@ class DoctorRepository {
   /// ✅ الانضمام لعيادة موجودة أصلاً - صار بس clinic_code + consultation_fee
   /// (التخصص/القسم ما عاد يُطلب هون؛ بينحدد مرة وحدة بالريجستر ومستقل
   /// عن أي عيادة معينة).
-  /// ⚠️ 19/8: الباك عدّل اسم الحقل من clinic_id لـ clinic_code (نفس رد
-  /// الخطأ 422 لما ترسل clinic_id: {"errors":{"clinic_code":["The clinic
-  /// code field is required."]}}) - لسا القيمة نفسها رقم العيادة (id)،
-  /// بس اسم الحقل المرسل بالـ request صار clinic_code.
-  Future<DoctorProfileInfo> joinClinic({required int clinicId, required double consultationFee}) async {
+  /// ✅ 20/8: الحقل صار String clinicCode (مش int clinicId) - نفس تسمية
+  /// وشكل حقل "Clinic Code" بخطوة الريجستر (register_model.dart)، لأنه
+  /// مش بالضرورة رقم صرف، هو "كود" حسب تسمية الباك (clinic_code).
+  Future<DoctorProfileInfo> joinClinic({required String clinicCode, required double consultationFee}) async {
     try {
       final formData = FormData.fromMap({
-        'clinic_code': clinicId.toString(),
+        'clinic_code': clinicCode,
         'consultation_fee': consultationFee.toString(),
       });
       final response = await _dio.post(ApiConstants.doctorJoinClinic, data: formData);

@@ -4,23 +4,24 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:untitled3/core/constants/setting.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../../core/constants/app_strings_doctor.dart';
+import '../../consultations/screens/consultations_inbox_screen.dart';
+import '../../notifications/screens/notifications_screen.dart';
+import '../../notifications/view_models/notifications_cubit.dart';
+import '../../notifications/view_models/notifications_state.dart';
 import '../../patient_details/views/widgets/settings_drawer_widget.dart';
 import '../view_models/doctor_appointments_cubit.dart';
 import '../view_models/doctor_home_cubit.dart';
 import '../view_models/doctor_home_state.dart';
-import '../view_models/doctor_notifications_cubit.dart';
-import '../view_models/doctor_notifications_state.dart';
 import '../view_models/work_schedule_cubit.dart';
 import 'doctor_appointments_screen.dart';
 import 'doctor_home_screen.dart';
-import 'doctor_notifications_screen.dart';
 import 'weekly_template_editor_screen.dart';
 import 'widgets/doctor_bottom_nav_bar.dart';
 
 /// شاشة الطبيب الرئيسية بعد تسجيل الدخول - مكافئة MainLayoutScreen
 /// تبع المريض بنفس البنية (AppBar + BottomNav + IndexedStack)، بس
-/// بأربع تابات: الرئيسية / المواعيد / جدول العمل / شات (فاضية حالياً).
+/// بأربع تابات: الرئيسية / المواعيد / جدول العمل / شات (ConsultationsInboxScreen،
+/// مربوطة بالباك الحقيقي - راجع lib/features/consultations).
 class DoctorMainLayoutScreen extends StatefulWidget {
   final Map<String, dynamic> currentUserJson;
 
@@ -34,22 +35,21 @@ class _DoctorMainLayoutScreenState extends State<DoctorMainLayoutScreen> {
   int _currentIndex = 0;
   late final DoctorHomeCubit _homeCubit;
   late final DoctorAppointmentsCubit _appointmentsCubit;
-  late final DoctorNotificationsCubit _notificationsCubit;
+  late final NotificationsCubit _notificationsCubit;
 
-  int get _doctorId {
-    final profile = widget.currentUserJson['profile'];
-    if (profile is Map && profile['doctor_id'] != null) {
-      return int.tryParse('${profile['doctor_id']}') ?? 0;
-    }
-    return int.tryParse('${widget.currentUserJson['id'] ?? 0}') ?? 0;
-  }
+  /// Account/user id (not the doctor profile id) - this is what
+  /// consultation messages' `sender_id` is compared against for bubble
+  /// alignment.
+  int get _currentUserId => int.tryParse('${widget.currentUserJson['id'] ?? 0}') ?? 0;
 
   @override
   void initState() {
     super.initState();
     _homeCubit = DoctorHomeCubit(initialUserJson: widget.currentUserJson)..load();
-    _appointmentsCubit = DoctorAppointmentsCubit(doctorId: _doctorId)..load();
-    _notificationsCubit = DoctorNotificationsCubit(doctorId: _doctorId)..load();
+    _appointmentsCubit = DoctorAppointmentsCubit()..load();
+    // ✅ صار مربوط بالباك الحقيقي (GET /notifications، مشترك مع المريض)
+    // بدل DoctorNotificationsCubit يلي كان يخزّن بيانات وهمية محلياً.
+    _notificationsCubit = NotificationsCubit()..load()..startPolling();
   }
 
   @override
@@ -108,10 +108,20 @@ class _DoctorMainLayoutScreenState extends State<DoctorMainLayoutScreen> {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(value: _notificationsCubit, child: const DoctorNotificationsScreen()),
+                      builder: (_) => BlocProvider.value(
+                        value: _notificationsCubit,
+                        child: NotificationsScreen(
+                          currentUserId: _currentUserId,
+                          // تاب "المواعيد" هو index 1 بهاي الشاشة.
+                          onOpenAppointment: (ctx, notification) {
+                            setState(() => _currentIndex = 1);
+                            Navigator.of(ctx).popUntil((route) => route.isFirst);
+                          },
+                        ),
+                      ),
                     ),
                   ),
-                  child: BlocBuilder<DoctorNotificationsCubit, DoctorNotificationsState>(
+                  child: BlocBuilder<NotificationsCubit, NotificationsState>(
                     builder: (context, state) => Stack(
                       clipBehavior: Clip.none,
                       children: [
@@ -121,9 +131,14 @@ class _DoctorMainLayoutScreenState extends State<DoctorMainLayoutScreen> {
                             right: -2,
                             top: -2,
                             child: Container(
-                              width: 8.w,
-                              height: 8.w,
+                              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                              constraints: BoxConstraints(minWidth: 14.w),
                               decoration: const BoxDecoration(color: Color(0xFFC0392B), shape: BoxShape.circle),
+                              child: Text(
+                                state.unreadCount > 9 ? '9+' : '${state.unreadCount}',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.white, fontSize: 9.sp, fontWeight: FontWeight.w700),
+                              ),
                             ),
                           ),
                       ],
@@ -165,7 +180,7 @@ class _DoctorMainLayoutScreenState extends State<DoctorMainLayoutScreen> {
                   );
                 },
               ),
-              _EmptyChatTab(isDark: isDark, textColor: textColor),
+              ConsultationsInboxScreen(currentUserId: _currentUserId, embedded: true),
             ],
           ),
         ),
@@ -183,37 +198,4 @@ class _EmbeddedWorkSchedule extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const WeeklyTemplateEditorScreen(embedded: true);
-}
-
-class _EmptyChatTab extends StatelessWidget {
-  final bool isDark;
-  final Color textColor;
-  const _EmptyChatTab({required this.isDark, required this.textColor});
-
-  @override
-  Widget build(BuildContext context) {
-    final primaryGreen = isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen;
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72.w,
-              height: 72.h,
-              decoration: BoxDecoration(color: primaryGreen.withOpacity(0.12), shape: BoxShape.circle),
-              child: Icon(Icons.chat_bubble_outline_rounded, size: 32.sp, color: primaryGreen),
-            ),
-            SizedBox(height: 16.h),
-            Text(DoctorStrings.noConversationsYet(context),
-                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: textColor)),
-            SizedBox(height: 6.h),
-            Text(DoctorStrings.noConversationsHint(context),
-                textAlign: TextAlign.center, style: TextStyle(fontSize: 12.5.sp, color: AppColors.textLightGrey)),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -1,9 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/constants/appointment_status.dart';
 import '../../../core/network/api_exception.dart';
 import '../data/doctor_appointments_repository.dart';
 import '../data/doctor_repository.dart';
 import '../data/doctor_schedule_repository.dart';
-import '../models/doctor_appointment_models.dart';
 import '../models/doctor_profile_models.dart';
 import 'doctor_home_state.dart';
 
@@ -33,16 +33,15 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
       // اللي بيرجع عياداته اللي دخلها بالريجستر، لازم نجيبه أول شي
       // حتى نعرف لأي عيادات منحمّل الجدول.
       final profile = await _doctorRepository.getProfile();
-      final doctorId = profile.doctorId ?? 0;
 
       final schedule = await _scheduleRepository.getAllSchedules();
-      final appointments = await _appointmentsRepository.getAppointments(doctorId);
+      final appointments = await _appointmentsRepository.getAppointments();
 
       emit(state.copyWith(
         status: DoctorHomeStatus.loaded,
         profile: profile,
         schedule: schedule,
-        upcomingAppointments: appointments.where((a) => a.status == DoctorAppointmentStatus.upcoming).toList(),
+        upcomingAppointments: appointments.where((a) => a.tabGroup == AppointmentTabGroup.upcoming).toList(),
       ));
     } on ApiException catch (e) {
       emit(state.copyWith(status: DoctorHomeStatus.failure, errorMessage: e.message));

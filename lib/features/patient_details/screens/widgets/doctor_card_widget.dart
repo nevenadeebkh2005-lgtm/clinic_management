@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/doctor_dummy_data.dart';
 import '../../view_models/doctor_listing_cubit.dart';
+import '../../view_models/patient_appointments_cubit.dart';
 import '../../../../core/cubits/medical_record_status_cubit.dart';
 import '../doctor_profile_screen.dart';
 
@@ -76,7 +77,7 @@ class DoctorCardWidget extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      doc.subSpecialty,
+                      doc.department,
                       style: TextStyle(fontSize: subSize, color: AppColors.textLightGrey, fontWeight: FontWeight.w500),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -140,13 +141,17 @@ class DoctorCardWidget extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () {
                 // ⚠️ 19/8: DoctorProfileScreen بيحتاج MedicalRecordStatusCubit
-                // و DoctorListingCubit (متوفرين فقط جوا MainLayoutScreen عبر
-                // MultiBlocProvider) - لو فتحناها بـ Navigator.push عادي
-                // بتصير الشاشة الجديدة برّا شجرة الـ Provider هاي وبيصير
-                // ProviderNotFoundException فوراً. الحل: نمرر نفس الكيوبتس
-                // الموجودة بالـ context الحالي عبر BlocProvider.value.
+                // و DoctorListingCubit و PatientAppointmentsCubit (متوفرين
+                // فقط جوا MainLayoutScreen عبر MultiBlocProvider) - لو
+                // فتحناها بـ Navigator.push عادي بتصير الشاشة الجديدة برّا
+                // شجرة الـ Provider هاي وبيصير ProviderNotFoundException
+                // فوراً. الحل: نمرر نفس الكيوبتس الموجودة بالـ context
+                // الحالي عبر BlocProvider.value. (PatientAppointmentsCubit
+                // ضروري هون تحديداً حتى بعد نجاح الحجز نقدر ننادي load()
+                // فوراً - راجع _onBookPressed بـ doctor_profile_screen.dart).
                 final doctorListingCubit = context.read<DoctorListingCubit>();
                 final medicalRecordStatusCubit = context.read<MedicalRecordStatusCubit>();
+                final appointmentsCubit = context.read<PatientAppointmentsCubit>();
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -154,6 +159,7 @@ class DoctorCardWidget extends StatelessWidget {
                       providers: [
                         BlocProvider.value(value: doctorListingCubit),
                         BlocProvider.value(value: medicalRecordStatusCubit),
+                        BlocProvider.value(value: appointmentsCubit),
                       ],
                       child: DoctorProfileScreen(doctor: doc),
                     ),
